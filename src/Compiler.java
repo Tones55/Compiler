@@ -6,14 +6,20 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Compiler {
-
-    private static boolean verbose = false;
     public static void main(String[] args) {
 
         System.out.println(); // for readability in output console
 
-        String[] programs; // used to store the programs from the input file
-        PatternMatcher patternMatcher = new PatternMatcher();
+
+        int x
+        = 1;
+
+        boolean verbose = false; 
+        ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); // used to store the programs from the input file
+        programs.add(new ArrayList<String>()); // add an empty arraylist to the arraylist of programs (this is so that the first program is stored in the first index of the arraylist)
+        //PatternMatcher patternMatcher = new PatternMatcher();
+        int programNumber = 0;
+        String input = "";
 
         // Create a new scanner object to read from the file
         Scanner scanner = null;
@@ -24,32 +30,36 @@ public class Compiler {
         }
 
         //read from the file
-        String input = "";
         while (scanner.hasNextLine()) {
-            input += scanner.nextLine();
-        }
-
-        //split input by $ and store in programs array but keep the $ in the array
-        programs = input.split("(?<=\\$)");
-
-        //remove comments from programs
-        for (int i = 0; i < programs.length; i++) {
-            programs[i] = programs[i].replaceAll("(?s)/\\*.*?\\*/", "");
+            input = scanner.nextLine();
+            programs.get(programNumber).add(input);
+            if (input.contains("$")) {
+                if(scanner.hasNextLine()){
+                programs.add(new ArrayList<String>());
+                programNumber++;
+                }
+            }
         }
 
         if(verbose){
             System.out.println("Raw input: " + input);
             System.out.println();
         
-            for (int i = 0; i < programs.length; i++) {
-                System.out.println("Program " + i + ": " + programs[i]);
+            for (int i = 0; i < programs.size(); i++) {
+                printArrayList(programs.get(i));
             }
         }
 
-        
-        for (int i = 0; i < programs.length; i++) {
-            new CodeGeneration(new SemanticAnalysis(new Parser(new Lexer(programs[i] , patternMatcher))));
+        for (int i = 0; i < programs.size(); i++) {
+            new CodeGeneration(new SemanticAnalysis(new Parser(new Lexer(programs.get(i)))));
         }
 
     }
+
+    private static void printArrayList(ArrayList<String> list){
+        for(int i=0; i<list.size(); i++){
+            System.out.println(list.get(i));
+        }
+    }
+
 }
