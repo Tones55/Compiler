@@ -7,11 +7,16 @@ import java.util.regex.PatternSyntaxException;
 
 public class PatternMatcher {
 
-    Pattern keyword;
-    Pattern identifier;
-    Pattern symbol;
-    Pattern digit;
-    Pattern character;
+    private static Pattern keyword;
+    private static Pattern identifier;
+    private static Pattern symbol;
+    private static Pattern digit;
+    private static Pattern character;
+    private static Pattern comment;
+
+    //used to aid in the creation of tokens but are not tokens themselves
+    private static Pattern boundry;
+    private static Pattern eof;
     
     public PatternMatcher(){
         /*
@@ -24,32 +29,50 @@ public class PatternMatcher {
 
         keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
         identifier = Pattern.compile("[a-z]");
-        symbol = Pattern.compile("{|}|(|)|==|!=|+");
+        symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
         digit = Pattern.compile("[0-9]");
         character = Pattern.compile("[a-z]|\\s");
+        comment = Pattern.compile("(/\\*)((a-z)*)(\\*/)");
+
+        boundry = Pattern.compile("\\s|\\n|\\t|\\r|\\f");
+        eof = Pattern.compile("$");
+
+
     }
 
-    public String match(String input){
+    public static void match(String input , Position pos){
         Matcher m = keyword.matcher(input);
         if(m.find()){
-            return "keyword";
+            Lexer.createtoken("Keyword" , input , pos);
         }
         m = identifier.matcher(input);
         if(m.find()){
-            return "identifier";
+            Lexer.createtoken("Identifier" , input , pos);
         }
         m = symbol.matcher(input);
         if(m.find()){
-            return "symbol";
+            Lexer.createtoken("Symbol" , input , pos);
         }
         m = digit.matcher(input);
         if(m.find()){
-            return "digit";
+            Lexer.createtoken("Digit" , input , pos);
         }
         m = character.matcher(input);
         if(m.find()){
-            return "character";
+            Lexer.createtoken("Character" , input , pos);
         }
-        return "error";
+        m = comment.matcher(input);
+        if(m.find()){
+            Lexer.createtoken("Comment" , input , pos);
+        }
+
+        m = boundry.matcher(input);
+        if(m.find()){
+            
+        }
+        m = eof.matcher(input);
+        if(m.find()){
+            
+        }
     }
 }
