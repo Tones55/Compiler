@@ -10,10 +10,6 @@ public class Compiler {
 
         System.out.println(); // for readability in output console
 
-
-        int x
-        = 1;
-
         boolean verbose = false; 
         ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); // used to store the programs from the input file
         programs.add(new ArrayList<String>()); // add an empty arraylist to the arraylist of programs (this is so that the first program is stored in the first index of the arraylist)

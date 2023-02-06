@@ -1,0 +1,26 @@
+use java trees
+use java regex
+
+grammar precedence
+    keyword
+    identifier
+    symbol
+    digit
+    char
+
+iterate by char until boundries
+    {},=,(),SPACE,+,-
+track position at all times, be able to store position of boundries
+find quotes with booleans
+
+find out if a single statement can be on several lines and if any single word can be on seperate lines
+int x
+= 1
+
+i
+n
+t
+
+new data structure will insert a # at every newline to track line numbers
+will have to search the program for first instance of #
+if none are found continue as planned, otherwise find first instance, dont lex, and report it
