@@ -42,7 +42,7 @@ public class Compiler {
         //if verbose print out the programs in input file
         if(verbose){
             for (int i = 0; i < programs.size(); i++) {
-                System.out.println("Program " + i + ": ");
+                System.out.println("Program " + i+1 + ": ");
                 printArrayList(programs.get(i));
             }
         }
