@@ -2,7 +2,8 @@ package src;
 
 public class CodeGeneration {
 
-    public CodeGeneration(SemanticAnalysis semanticAnalysis) {
+    public static String doCodeGeneration(String temp) {
+        return "TODO: Code Generation";
         // TODO Auto-generated constructor stub
     }
 }

@@ -2,7 +2,8 @@ package src;
 
 public class SemanticAnalysis {
     
-    public SemanticAnalysis(Parser parser) {
+    public static String doSemanticAnalysis(String temp) {
+        return "";
         // TODO Auto-generated constructor stub
     }
 }
