@@ -41,10 +41,8 @@ public class Compiler {
 
         //if verbose print out the programs in input file
         if(verbose){
-            System.out.println("Raw input: " + input);
-            System.out.println();
-        
             for (int i = 0; i < programs.size(); i++) {
+                System.out.println("Program " + i + ": ");
                 printArrayList(programs.get(i));
             }
         }
