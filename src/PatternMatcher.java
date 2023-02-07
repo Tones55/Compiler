@@ -1,22 +1,20 @@
 package src;
 
-import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
 
 public class PatternMatcher {
 
+    private static Pattern explicitIdentifier; //used to match identifiers that are not keywords
     private static Pattern keyword;
     private static Pattern identifier;
     private static Pattern symbol;
     private static Pattern digit;
     private static Pattern character;
-    private static Pattern comment;
+    private static Pattern quote;
 
     //used to aid in the creation of tokens but are not tokens themselves
     private static Pattern boundry;
-    private static Pattern eof;
     
     public PatternMatcher(){
         /*
@@ -27,52 +25,74 @@ public class PatternMatcher {
         character = Pattern.compile("^[a-z]");
         */
 
+        explicitIdentifier = Pattern.compile("[^pwisbtf]");
         keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
         identifier = Pattern.compile("[a-z]");
         symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
         digit = Pattern.compile("[0-9]");
         character = Pattern.compile("[a-z]|\\s");
-        comment = Pattern.compile("(/\\*)((a-z)*)(\\*/)");
+        quote = Pattern.compile("\"");
 
         boundry = Pattern.compile("\\s|\\n|\\t|\\r|\\f");
-        eof = Pattern.compile("$");
-
-
     }
 
-    public static void match(String input , Position pos){
-        Matcher m = keyword.matcher(input);
+    public static String match(String input , Position pos , int t){
+        Matcher m;
+        m = explicitIdentifier.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Keyword" , input , pos);
+            Lexer.updateToken("Identifier" , input , pos , t);
+            return "Explicit Identifier";
+        }
+        m = keyword.matcher(input);
+        if(m.find()){
+            Lexer.updateToken("Keyword" , input , pos , t);
+            return "Keyword";
         }
         m = identifier.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Identifier" , input , pos);
+            Lexer.updateToken("Identifier" , input , pos , t);
+            return "Identifier";
         }
         m = symbol.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Symbol" , input , pos);
+            Lexer.updateToken("Symbol" , input , pos , t);
+            return "Symbol";
         }
         m = digit.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Digit" , input , pos);
+            Lexer.updateToken("Digit" , input , pos , t);
+            return "Digit";
         }
         m = character.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Character" , input , pos);
+            Lexer.updateToken("Character" , input , pos , t);
+            return "Character";
         }
-        m = comment.matcher(input);
+        m = quote.matcher(input);
         if(m.find()){
-            Lexer.createtoken("Comment" , input , pos);
+            Lexer.updateToken("Quote", input, pos , t);
+            return "Quote";
         }
 
         m = boundry.matcher(input);
         if(m.find()){
-            
+            return "Boundry";
         }
-        m = eof.matcher(input);
+        return "No Match";
+    }
+
+    public static String checkForCharList(String input , Position pos) {
+        Matcher m = keyword.matcher(input);
+        m = character.matcher(input);
         if(m.find()){
-            
+            Lexer.updateToken("Character" , input , pos , 1);
+            return "Character";
         }
+        m = quote.matcher(input);
+        if(m.find()){
+            Lexer.updateToken("Quote", input, pos , 1);
+            return "Quote";
+        }
+        return "No Match";
     }
 }
