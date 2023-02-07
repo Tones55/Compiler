@@ -10,7 +10,8 @@ public class Compiler {
 
         System.out.println(); // for readability in output console
 
-        boolean verbose = false; 
+        boolean verbose = true; 
+        String output;
         ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); // used to store the programs from the input file
         programs.add(new ArrayList<String>()); // add an empty arraylist to the arraylist of programs (this is so that the first program is stored in the first index of the arraylist)
         //PatternMatcher patternMatcher = new PatternMatcher();
@@ -28,6 +29,7 @@ public class Compiler {
         //read from the file
         while (scanner.hasNextLine()) {
             input = scanner.nextLine();
+            input = input.replaceAll("/\\*.*?\\*/", "");
             programs.get(programNumber).add(input);
             if (input.contains("$")) {
                 if(scanner.hasNextLine()){
@@ -37,6 +39,7 @@ public class Compiler {
             }
         }
 
+        //if verbose print out the programs in input file
         if(verbose){
             System.out.println("Raw input: " + input);
             System.out.println();
@@ -46,13 +49,16 @@ public class Compiler {
             }
         }
 
+        //compile each program one at a time
         for (int i = 0; i < programs.size(); i++) {
-            new CodeGeneration(new SemanticAnalysis(new Parser(new Lexer(programs.get(i)))));
+            //output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
+            //System.out.println("Program " + i + ": " + output);
         }
 
     }
 
     private static void printArrayList(ArrayList<String> list){
+        //used to pint an arraylist line by line
         for(int i=0; i<list.size(); i++){
             System.out.println(list.get(i));
         }
