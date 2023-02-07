@@ -51,8 +51,8 @@ public class Compiler {
 
         //compile each program one at a time
         for (int i = 0; i < programs.size(); i++) {
-            //output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
-            //System.out.println("Program " + i + ": " + output);
+            output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
+            System.out.println("Program " + i + ": " + output);
         }
 
     }
