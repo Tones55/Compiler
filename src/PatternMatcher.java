@@ -5,36 +5,17 @@ import java.util.regex.Matcher;
 
 public class PatternMatcher {
 
-    private static Pattern explicitIdentifier; //used to match identifiers that are not keywords
-    private static Pattern keyword;
-    private static Pattern identifier;
-    private static Pattern symbol;
-    private static Pattern digit;
-    private static Pattern character;
-    private static Pattern quote;
+    private static Pattern explicitIdentifier = Pattern.compile("acdeghjklmnopqruvxyz"); //used to match identifiers that are not keywords
+    private static Pattern keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
+    private static Pattern identifier = Pattern.compile("[a-z]");
+    private static Pattern symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
+    private static Pattern digit = Pattern.compile("[0-9]");
+    private static Pattern character = Pattern.compile("[a-z]|\\s");
+    private static Pattern quote = Pattern.compile("\"");
 
     //used to aid in the creation of tokens but are not tokens themselves
-    private static Pattern boundry;
-    
-    public PatternMatcher(){
-        /*
-        keyword = Pattern.compile("^(print|while|if|int|string|boolean|true|false)");
-        identifier = Pattern.compile("^[a-z]");
-        symbol = Pattern.compile("^(\\{|\\}|\\(|\\)|==|!=|\\+)");
-        digit = Pattern.compile("^[0-9]+");
-        character = Pattern.compile("^[a-z]");
-        */
-
-        explicitIdentifier = Pattern.compile("[^pwisbtf]");
-        keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
-        identifier = Pattern.compile("[a-z]");
-        symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
-        digit = Pattern.compile("[0-9]");
-        character = Pattern.compile("[a-z]|\\s");
-        quote = Pattern.compile("\"");
-
-        boundry = Pattern.compile("\\s|\\n|\\t|\\r|\\f");
-    }
+    private static Pattern boundry = Pattern.compile("☺"); //used to match whitespace
+    private static Pattern endOfProgram = Pattern.compile("$");
 
     public static String match(String input , Position pos , int t){
         Matcher m;
@@ -76,7 +57,12 @@ public class PatternMatcher {
 
         m = boundry.matcher(input);
         if(m.find()){
+            //System.out.println("Boundry: " + input);
             return "Boundry";
+        }
+        m = endOfProgram.matcher(input);
+        if(m.find()){
+            return "End of Program";
         }
         return "No Match";
     }
