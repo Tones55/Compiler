@@ -10,7 +10,7 @@ public class Compiler {
 
         System.out.println(); // for readability in output console
 
-        boolean verbose = true; 
+        boolean verbose = false; 
         String output;
         ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); // used to store the programs from the input file
         programs.add(new ArrayList<String>()); // add an empty arraylist to the arraylist of programs (this is so that the first program is stored in the first index of the arraylist)
@@ -30,6 +30,7 @@ public class Compiler {
         while (scanner.hasNextLine()) {
             input = scanner.nextLine();
             input = input.replaceAll("/\\*.*?\\*/", "");
+            input = input.replaceAll("\\s", "☺"); //replace all spaces with ☺
             programs.get(programNumber).add(input);
             if (input.contains("$")) {
                 if(scanner.hasNextLine()){
@@ -42,7 +43,7 @@ public class Compiler {
         //if verbose print out the programs in input file
         if(verbose){
             for (int i = 0; i < programs.size(); i++) {
-                System.out.println("Program " + i+1 + ": ");
+                System.out.println("Program " + (i+1) + ": ");
                 printArrayList(programs.get(i));
             }
         }
@@ -50,7 +51,9 @@ public class Compiler {
         //compile each program one at a time
         for (int i = 0; i < programs.size(); i++) {
             output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
+            if (verbose) {
             System.out.println("Program " + i + ": " + output);
+            }
         }
 
     }
