@@ -24,3 +24,7 @@ warning for unterminated comments
 
 ask how to match spaces
 ask how to match exactly my patterns, no trailing/preceeding spaces/letters
+
+check for open comment, check for close comment
+    if no close say warning, remove all
+    else remove all
