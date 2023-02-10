@@ -21,3 +21,6 @@ change how storing a keyword works
 
 detect if $ is missing on final program and give a warning if store
 warning for unterminated comments
+
+ask how to match spaces
+ask how to match exactly my patterns, no trailing/preceeding spaces/letters
