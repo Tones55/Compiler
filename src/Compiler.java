@@ -5,8 +5,13 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import java.time.LocalDateTime;
+
 public class Compiler {
+
+    public static int fileLine = 0;
     public static void main(String[] args) {
+        int start = LocalDateTime.now().getNano();
 
         System.out.println(); // for readability in output console
 
@@ -17,6 +22,7 @@ public class Compiler {
         //PatternMatcher patternMatcher = new PatternMatcher();
         int programNumber = 0;
         String input = "";
+        int lineNumber = 0;
 
         // Create a new scanner object to read from the file
         Scanner scanner = null;
@@ -28,9 +34,19 @@ public class Compiler {
 
         //read from the file
         while (scanner.hasNextLine()) {
+            lineNumber++;
             input = scanner.nextLine();
-            input = input.replaceAll("/\\*.*?\\*/", "");
-            input = input.replaceAll("\\s", "☺"); //replace all spaces with ☺
+            if (input.contains("/*")) {
+                if (input.contains("*/")) {
+                    //replace everything between /* and */ with nothing
+                    input = input.replaceAll("/\\*.*?\\*/", "");
+                }
+                else {
+                    //replace everything after /* with nothing and give warning
+                    input = input.replaceAll("/\\*.*", "");
+                    System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Comment not closed");
+                }
+            }
             programs.get(programNumber).add(input);
             if (input.contains("$")) {
                 if(scanner.hasNextLine()){
@@ -38,6 +54,9 @@ public class Compiler {
                 programNumber++;
                 }
             }
+        }
+        if (!input.contains("$")) {
+            System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Missing \"$\" at the end of final program");
         }
 
         //if verbose print out the programs in input file
@@ -49,14 +68,17 @@ public class Compiler {
         }
 
         //compile each program one at a time
+        System.out.println(); //output formatting
         for (int i = 0; i < programs.size(); i++) {
+            fileLine++;
             output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
             if (verbose) {
             System.out.println("Program " + i + ": " + output);
             }
         }
-
-    }
+        //print compilation time
+        int stop = LocalDateTime.now().getNano();
+        System.out.println("Compilation Time: " + ((stop - start)/1000000.0) + " milisecons");    }
 
     private static void printArrayList(ArrayList<String> list){
         //used to pint an arraylist line by line
