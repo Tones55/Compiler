@@ -4,11 +4,11 @@ import java.util.ArrayList;
 
 public class Lexer {
 
-    private static boolean verbose = true;
+    private static boolean verbose = false;
     private static ArrayList<String> program;
     private static ArrayList<Token> tokens;
     private static Token lastToken;
-    private static Token currentToken;
+    /*private static Token currentToken; not needed anymore*/
     private static Position lastPosition;
     private static Position currentPosition;
     private static boolean isString;
@@ -18,12 +18,13 @@ public class Lexer {
 
         tokens = new ArrayList<Token>();
         lastToken = null;
-        currentToken = null;
+        /*currentToken = null; see imports*/
         lastPosition = new Position(1,1);
-        currentPosition = new Position(1,1);
+        currentPosition = new Position(1,0);
         isString = false;
 
         lex(program.get(0));
+        System.out.println("\n");
         return tokens;
     }
 
@@ -36,6 +37,10 @@ public class Lexer {
         String currentMatch = ""; // the type of match found for the current character
 
         for(int i=0; i<currentWork.length(); i++){
+
+            //increment current position column
+            currentPosition.setColumn(currentPosition.getColumn() + 1);
+
             currentChar = currentWork.charAt(i) + "";
             visible += currentWork.charAt(i);
 
@@ -85,7 +90,8 @@ public class Lexer {
                     }
                 }
                 else {
-                    if (currentMatch.equals("Boundry") | currentMatch.equals("Quote") ) {
+                    if (currentMatch.equals("Boundry") | currentMatch.equals("Quote") | 
+                    currentMatch.equals("symbol")) {
                         // if a token was found add the token and go to "Clean up"
                         if(lastToken != null){
                             /*tokens.add(lastToken); in clean up*/
@@ -94,11 +100,10 @@ public class Lexer {
                         // if no token was found and a boundry was hit, report error
                         else {
                             System.out.println("Lex Error: Unknown token on line: " + lastPosition.getLine() +
-                                "near column: " + lastPosition.getColumn());
+                                " near column: " + lastPosition.getColumn());
                         }
                     }
                     if (currentMatch.equals("")) {
-
                     }
                 }
             }
@@ -118,7 +123,7 @@ public class Lexer {
                     currentWork = currentWork.substring(i + 1);
                 }
                 else {
-                    System.out.println("Lex Error: Cannot use character " + currentChar + " inside of a string " + " found at " + currentPosition.toString());
+                    System.out.println("Lex Error: Cannot use character " + currentChar + " inside of a string" + " found at " + currentPosition.toString());
                     System.exit(0);
                 }
             }
@@ -130,7 +135,9 @@ public class Lexer {
         // if a token was found shorten the working string and add the token to the list
         if (lastToken != null) {
             currentWork = currentWork.substring(lastToken.getValue().length());
+            lastPosition.setColumn(currentPosition.getColumn());
             tokens.add(lastToken);
+            System.out.println(lastToken.toString());
         }
 
         // if the string is not empty
@@ -141,18 +148,23 @@ public class Lexer {
                 lex(currentWork);
                 return;
             }
+            else if (match.equals("End of Program")) {
+                lastToken = new Token("End of Program", "$", currentPosition);
+                System.out.println(lastToken.toString());
+                return;
+            }
             // if there was no token found but there is still a string to lex
             else {
                 System.out.println("Lex Error: Unknown token on line: " + lastPosition.getLine() +
-                "near column: " + lastPosition.getColumn());
+                " near column: " + lastPosition.getColumn());
                 System.exit(0);
             }
         }
         // if the string is empty and there is a new line to lex
         else if (currentPosition.getLine() < program.size()) {
             // start lexing the next line
-            incrementLine();
             currentWork = program.get(currentPosition.getLine());
+            incrementLine();
             lex(currentWork);
             return;
         }
@@ -164,7 +176,7 @@ public class Lexer {
             lastToken = new Token(type, value, position);
         }
         else {
-            currentToken = new Token(type, value, position);
+            /*currentToken = new Token(type, value, position);see imports*/
         }
     }
 
