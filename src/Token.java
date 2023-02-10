@@ -23,6 +23,6 @@ public class Token {
     public void setPosition(Position position) { this.position = position; }
 
     public String toString() {
-        return "Found Token: " + name + " [" + value + "]" + " at location " + position.toString();
+        return "Input Line: " + Compiler.fileLine + " :: " + "Found Token: " + name + " [" + value + "]" + " at location " + position.toString();
     }
 }
