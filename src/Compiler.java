@@ -77,7 +77,7 @@ public class Compiler {
         }
         //print compilation time
         int stop = LocalDateTime.now().getNano();
-        System.out.println("Compilation Time: " + ((stop - start)/1000000.0) + " milisecons");    }
+        System.out.println("\nCompilation Time: " + ((stop - start)/1000000.0) + " milisecons\n");    }
 
     private static void printArrayList(ArrayList<String> list){
         //used to pint an arraylist line by line
