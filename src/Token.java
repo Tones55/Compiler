@@ -1,5 +1,3 @@
-package src;
-
 public class Token {
 
     private String name; //keyword,identifier,symbol,digit,character
