@@ -17,7 +17,7 @@ public class PatternMatcher {
     private static Pattern endOfProgram = Pattern.compile("\\$");
     private static Pattern illegalCharacters = Pattern.compile("[^a-z0-9\\s\\t\\r\\{\\}\\(\\)\\=\\!\\+\"\\$]");
 
-    public static String match(String input , Position pos , int t){
+    public static String match(String input , int t){
         Matcher m;
         m = explicitIdentifier.matcher(input);
         String matchName = "No Match";
@@ -25,43 +25,43 @@ public class PatternMatcher {
         // it never loops so continue sends it to the return statement
         for(int i=0;i<1;i++) {
             if(m.matches()){
-                Lexer.updateToken("Identifier" , input , pos , t);
+                Lexer.updateToken("Identifier" , input , t);
                 matchName = "Explicit Identifier";
                 continue;
             }
             m = keyword.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Keyword" , input , pos , t);
+                Lexer.updateToken("Keyword" , input , t);
                 matchName = "Keyword";
                 continue;
             }
             m = identifier.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Identifier" , input , pos , t);
+                Lexer.updateToken("Identifier" , input , t);
                 matchName = "Identifier";
                 continue;
             }
             m = symbol.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Symbol" , input , pos , t);
+                Lexer.updateToken("Symbol" , input , t);
                 matchName = "Symbol";
                 continue;
             }
             m = assign.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Symbol" , input , pos , t);
+                Lexer.updateToken("Symbol" , input , t);
                 matchName = "Assign";
                 continue;
             }
             m = digit.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Digit" , input , pos , t);
+                Lexer.updateToken("Digit" , input , t);
                 matchName = "Digit";
                 continue;
             }
             m = quote.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Quote", input, pos , t);
+                Lexer.updateToken("Quote", input, t);
                 matchName = "Quote";
                 continue;
             }
@@ -85,7 +85,7 @@ public class PatternMatcher {
         return matchName;
     }
 
-    public static String checkForCharList(String input , Position pos) {
+    public static String checkForCharList(String input) {
         Matcher m = keyword.matcher(input);
         m = character.matcher(input);
         String matchName = "No Match";
@@ -93,13 +93,13 @@ public class PatternMatcher {
         // it never loops so continue sends it to the return statement
         for (int i = 0; i < 1; i++) {
             if(m.matches()){
-                Lexer.updateToken("Character" , input , pos , 1);
+                Lexer.updateToken("Character" , input , 1);
                 matchName = "Character";
                 continue;
             }
             m = quote.matcher(input);
             if(m.matches()){
-                Lexer.updateToken("Quote", input, pos , 1);
+                Lexer.updateToken("Quote", input, 1);
                 matchName = "Quote";
                 continue;
             }
