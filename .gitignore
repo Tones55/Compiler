@@ -1,1 +1,9 @@
 tests.java
+CodeGeneration.class
+Compiler.class
+Lexer.class
+Parser.class
+PatternMatcher.class
+Position.class
+SemanticAnalysis.class
+Token.class

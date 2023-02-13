@@ -1,5 +1,3 @@
-package src;
-
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
@@ -11,8 +9,8 @@ public class Compiler {
 
     public static int fileLine = 0;
     public static void main(String[] args) {
-        int start = LocalDateTime.now().getNano();
 
+        int start = LocalDateTime.now().getNano();
         System.out.println(); // for readability in output console
 
         boolean verbose = false; 
@@ -26,7 +24,7 @@ public class Compiler {
         // Create a new scanner object to read from the file
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src\\IO\\input.txt"));
+            scanner = new Scanner(new File(args[0]));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
