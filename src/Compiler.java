@@ -17,9 +17,8 @@ public class Compiler {
 
         boolean verbose = false; 
         String output;
-        ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); // used to store the programs from the input file
-        programs.add(new ArrayList<String>()); // add an empty arraylist to the arraylist of programs (this is so that the first program is stored in the first index of the arraylist)
-        //PatternMatcher patternMatcher = new PatternMatcher();
+        ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); 
+        programs.add(new ArrayList<String>()); 
         int programNumber = 0;
         String input = "";
         int lineNumber = 0;
@@ -47,6 +46,7 @@ public class Compiler {
                     System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Comment not closed");
                 }
             }
+            // go to next list if a $ is found
             programs.get(programNumber).add(input);
             if (input.contains("$")) {
                 if(scanner.hasNextLine()){
@@ -55,6 +55,7 @@ public class Compiler {
                 }
             }
         }
+        // give warning if no $ at end of file
         if (!input.contains("$")) {
             System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Missing \"$\" at the end of final program");
         }
