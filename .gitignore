@@ -1,5 +1,5 @@
-launch.json
 tests.java
+launch.json
 CodeGeneration.class
 Compiler.class
 Lexer.class
