@@ -1,25 +1,12 @@
+javac -d ./classes ./src/*.java
+java -cp ./classes Compiler ./src/IO/input.txt
+
 use java trees
 
-change how storing a keyword works
-    it will match all the way until the boundry is hit and add everything
-    fixing RegEx could fix this
+Parse:
 
 add a way to kill lex with returns
 	has to go through all of them or rework how these are called
-	
-chnage error messages, check prj1 doc
-
-chnage verbose mode
-
-do not have a file extension for input file
-	remove .txt
-	
-dont use packages
-
-unterminated comment, error if no comment terminator
-
-
-Parse:
 
 build cst, check notes
 	depth first in order traversal
