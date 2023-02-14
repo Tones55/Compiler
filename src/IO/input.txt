@@ -34,6 +34,23 @@ inta=2
     "toot
 }$
 {
+    "no numbers 1"
+}$
+{
+    "not a keyword int"
+}$
+{
+    "no symbols allowed +}"   
+}$
+{
+    /* single digits */
+    1234567890
+}$
+{
+    /* no spaces needed */
+    intx=1stringb=2whilewprintif
+}$
+{
 /* I expect 2 warnings
     string s = "NO CAPS ALLOWED bad string input"
 }
