@@ -9,10 +9,12 @@ public class Lexer {
     private static Position lastPosition;
     private static Position currentPosition;
     private static boolean isString;
+    private static boolean hasError;
 
     public static ArrayList<Token> doLex(ArrayList<String> prog){
         program = prog;
 
+        hasError = false;
         tokens = new ArrayList<Token>();
         lastToken = null;
         lastPosition = new Position(1,1);
@@ -21,6 +23,9 @@ public class Lexer {
 
         lex(program.get(0));
         if (verbose) { System.out.println("\n");}
+        if (hasError) {
+            tokens = null;
+        }
         return tokens;
     }
 
@@ -48,6 +53,7 @@ public class Lexer {
                     System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: Illegal Character: " +
                      currentChar + " at position: " + lastPosition);
                     System.out.println("\t Legal characters are: a-z 0-9 'space' 'tab' 'return' { } ( ) = ! + \" $");
+                    hasError = true;
                     return;
                 }
 
@@ -92,6 +98,7 @@ public class Lexer {
                             System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: Unknown token on line: " + lastPosition.getLine() +
                                 " near column: " + lastPosition.getColumn());
                             System.out.println("Not sure how this even happened but it did");
+                            hasError = true;
                             return;
                         }
                     }
@@ -109,6 +116,7 @@ public class Lexer {
                     if (i == currentWork.length() - 1) {
                         System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: string is never terminated, found on line: " + 
                         (currentPosition.getLine()-1) + " near column: " + currentPosition.getColumn());
+                        hasError = true;
                         return;
                     }
                     else {
@@ -124,6 +132,7 @@ public class Lexer {
                     System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: Cannot use character \"" + currentChar +
                      "\" inside of a string" + " found at " + currentPosition);
                     System.out.println("\t Legal characters are: a-z 'space'");
+                    hasError = true;
                     return;
                 }
             }
@@ -158,6 +167,7 @@ public class Lexer {
                 System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: Unknown token on line: " + lastPosition.getLine() +
                 " near column: " + lastPosition.getColumn());
                 System.out.println("Not sure how this even happened but it did");
+                hasError = true;
                 return;
             }
         }
