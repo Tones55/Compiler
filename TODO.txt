@@ -5,15 +5,13 @@ use java trees
 
 Parse:
 
-add a way to kill lex with returns
+add a way to kill compilation if there is an error
 	has to go through all of them or rework how these are called
 
 build cst, check notes
 	depth first in order traversal
-	
-recursive descent 79?
 
-check pages 79-83
+check pages 79-83 recursive descent
 parseStart()
 parseValue()
 parseExpr()
@@ -22,4 +20,6 @@ parseValues()
 match()
 
 page 88 for example
+
+page 124 for cst
 
