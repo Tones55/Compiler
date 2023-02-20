@@ -1,29 +1,26 @@
-package src;
-
 public class Token {
 
-    private String name;
-    private String value;
-    private int line;
-    private int column;
+    private String name; //keyword,identifier,symbol,digit,character
+    private String value; //the actual value of the token
+    private Position position;
 
-    public Token(String name, String value, int line, int column) {
+    public Token(String name, String value, Position position) {
         this.name = name;
         this.value = value;
-        this.line = line;
-        this.column = column;
+        this.position = position;
     }
 
-    public String getName() {
-        return name;
-    }
-    public String getValue() {
-        return value;
-    }
-    public int getLine() {
-        return line;
-    }
-    public int getColumn() {
-        return column;
+    //getters
+    public String getName() { return name; }
+    public String getValue() { return value; }
+    public Position getPosition() { return position; }
+
+    //setters
+    public void setName(String name) { this.name = name; }
+    public void setValue(String value) { this.value = value; }
+    public void setPosition(Position position) { this.position = position; }
+
+    public String toString() {
+        return "Input Line: " + Compiler.fileLine + " :: " + "Found Token: " + name + " [" + value + "]" + " at location " + position.toString();
     }
 }

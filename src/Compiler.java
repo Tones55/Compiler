@@ -1,40 +1,89 @@
-package src;
-
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import java.time.LocalDateTime;
+
 public class Compiler {
+
+    public static int fileLine = 0;
     public static void main(String[] args) {
 
+        int start = LocalDateTime.now().getNano();
         System.out.println(); // for readability in output console
 
-        String[] programs; // used to store the programs from the input file
+        boolean verbose = false; 
+        String output;
+        ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); 
+        programs.add(new ArrayList<String>()); 
+        int programNumber = 0;
+        String input = "";
+        int lineNumber = 0;
 
         // Create a new scanner object to read from the file
         Scanner scanner = null;
         try {
-            scanner = new Scanner(new File("src\\IO\\input.txt"));
+            scanner = new Scanner(new File(args[0]));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
 
         //read from the file
-        String input = "";
         while (scanner.hasNextLine()) {
-            input += scanner.nextLine();
+            lineNumber++;
+            input = scanner.nextLine();
+            if (input.contains("/*")) {
+                if (input.contains("*/")) {
+                    //replace everything between /* and */ with nothing
+                    input = input.replaceAll("/\\*.*?\\*/", "");
+                }
+                else {
+                    //replace everything after /* with nothing and give warning
+                    input = input.replaceAll("/\\*.*", "");
+                    System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Comment not closed");
+                }
+            }
+            // go to next list if a $ is found
+            programs.get(programNumber).add(input);
+            if (input.contains("$")) {
+                if(scanner.hasNextLine()){
+                programs.add(new ArrayList<String>());
+                programNumber++;
+                }
+            }
+        }
+        // give warning if no $ at end of file
+        if (!input.contains("$")) {
+            System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Missing \"$\" at the end of final program");
         }
 
-        //split input by $ and store in programs array but keep the $ in the array
-        programs = input.split("(?<=\\$)");
+        //if verbose print out the programs in input file
+        if(verbose){
+            for (int i = 0; i < programs.size(); i++) {
+                System.out.println("Program " + (i+1) + ": ");
+                printArrayList(programs.get(i));
+            }
+        }
 
-        System.out.println("Raw input: " + input);
-        System.out.println();
+        //compile each program one at a time
+        System.out.println(); //output formatting
+        for (int i = 0; i < programs.size(); i++) {
+            fileLine++;
+            output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
+            if (verbose) {
+            System.out.println("Program " + i + ": " + output);
+            }
+        }
+        //print compilation time
+        int stop = LocalDateTime.now().getNano();
+        System.out.println("\nCompilation Time: " + ((stop - start)/1000000.0) + " milisecons\n");    }
 
-        //print programs
-        for (int i = 0; i < programs.length; i++) {
-            System.out.println("Program " + i + ": " + programs[i]);
+    private static void printArrayList(ArrayList<String> list){
+        //used to pint an arraylist line by line
+        for(int i=0; i<list.size(); i++){
+            System.out.println(list.get(i));
         }
     }
+
 }

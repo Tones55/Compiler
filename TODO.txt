@@ -1,0 +1,25 @@
+javac -d ./classes ./src/*.java
+java -cp ./classes Compiler ./src/IO/input.txt
+
+use java trees
+
+Parse:
+
+add a way to kill lex with returns
+	has to go through all of them or rework how these are called
+
+build cst, check notes
+	depth first in order traversal
+	
+recursive descent 79?
+
+check pages 79-83
+parseStart()
+parseValue()
+parseExpr()
+parseValues()
+...
+match()
+
+page 88 for example
+
