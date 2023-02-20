@@ -9,7 +9,7 @@ Project 4 is in the main branch
 
 Usage Intructions:  
 Compiler.java is the entry point  
-from the root directory of the project
+from the root directory of the project  
 javac ./src/*.java  
 java -cp ./src Compiler <input file>
 
