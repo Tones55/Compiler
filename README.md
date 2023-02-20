@@ -11,7 +11,7 @@ Usage Intructions:
 Compiler.java is the entry point  
 from the root directory of the project  
 javac ./src/*.java  
-java -cp ./src Compiler <input file>
+java -cp ./src Compiler (input file)
 
 ### Language Grammar Used
 https://www.labouseur.com/courses/compilers/grammar.pdf
