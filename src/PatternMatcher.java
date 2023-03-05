@@ -3,7 +3,7 @@ import java.util.regex.Matcher;
 
 public class PatternMatcher {
 
-    private static Pattern explicitIdentifier = Pattern.compile("acdeghjklmnopqruvxyz"); // used to match identifiers that can not be keywords
+    private static Pattern explicitIdentifier = Pattern.compile("a|c|d|e|g|h|j|k|l|m|n|o|p|q|r|u|v|x|y|z"); // used to match identifiers that can not be keywords
     private static Pattern keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
     private static Pattern identifier = Pattern.compile("[a-z]");
     private static Pattern symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
@@ -15,7 +15,7 @@ public class PatternMatcher {
     // used to aid in the creation of tokens but are not tokens themselves
     private static Pattern boundry = Pattern.compile("\\s|\\t|\\r"); // used to match whitespace
     private static Pattern endOfProgram = Pattern.compile("\\$");
-    private static Pattern illegalCharacters = Pattern.compile("[^a-z0-9\\s\\t\\r\\{\\}\\(\\)\\=\\!\\+\"\\$]");
+    private static Pattern illegalCharacters = Pattern.compile("[^a-z0-9\\s\\t\\r\\{\\}\\(\\)\\=\\!=\\+\"\\$]");
 
     public static String match(String input , int t){
         Matcher m;
