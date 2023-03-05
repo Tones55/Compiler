@@ -7,7 +7,11 @@ Project 2 is in the Parser branch
 Project 3 is in the Semantic Analysis branch  
 Project 4 is in the main branch  
 
+Usage Intructions:  
 Compiler.java is the entry point  
+from the root directory of the project  
+javac ./src/*.java  
+java -cp ./src Compiler <input file>
 
 ### Language Grammar Used
 https://www.labouseur.com/courses/compilers/grammar.pdf

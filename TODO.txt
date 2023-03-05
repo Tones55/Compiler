@@ -13,3 +13,13 @@ build cst, check notes
 	
 recursive descent 79?
 
+check pages 79-83
+parseStart()
+parseValue()
+parseExpr()
+parseValues()
+...
+match()
+
+page 88 for example
+
