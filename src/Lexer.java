@@ -79,6 +79,20 @@ public class Lexer {
                         // if the single char is a explicit identifier, add it to the token list
                         break;
                     }
+                    if (currentChar.equals("!")) {
+                        if (currentWork.length() > i) {
+                            if (currentWork.charAt(i + 1) != '=') {
+                                System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: found \"!\" with no \"=\" following it. a \"!\" cannot be used in this way: " + 
+                                (currentPosition.getLine()-1) + " near column: " + currentPosition.getColumn());
+                                return;
+                            }
+                        }
+                        else {
+                            System.out.println("Input Line: " + Compiler.fileLine + " :: Lex Error: found \"!\" with no \"=\" following it. a \"!\" cannot be used in this way: " + 
+                                (currentPosition.getLine()-1) + " near column: " + currentPosition.getColumn());
+                                return;
+                        }
+                    }
                 }
                 else {
                     if (currentMatch.equals("Boundry") | currentMatch.equals("Quote") | 
@@ -94,8 +108,6 @@ public class Lexer {
                             System.out.println("Not sure how this even happened but it did");
                             return;
                         }
-                    }
-                    if (currentMatch.equals("")) {
                     }
                 }
             }
