@@ -1,8 +1,8 @@
-import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 public class SemanticAnalysis {
     
-    public static String doSemanticAnalysis(DefaultTreeModel cst) {
+    public static String doSemanticAnalysis(DefaultMutableTreeNode root) {
         return "";
         // TODO Auto-generated constructor stub
     }

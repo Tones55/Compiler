@@ -65,15 +65,16 @@ public class PatternMatcher {
                 matchName = "Quote";
                 continue;
             }
+            m = endOfProgram.matcher(input);
+            if(m.find()){
+                Lexer.updateToken("EOF", input, t);
+                matchName = "End of Program";
+                continue;
+            }
             // not tokens but used to aid in the creation of tokens
             m = boundry.matcher(input);
             if(m.matches()){
                 matchName = "Boundry";
-                continue;
-            }
-            m = endOfProgram.matcher(input);
-            if(m.find()){
-                matchName = "End of Program";
                 continue;
             }
             m = illegalCharacters.matcher(input);
