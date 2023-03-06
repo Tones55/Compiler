@@ -1,3 +1,4 @@
+{a!2}$
 {
     /* test keywords */
     print while if int string boolean true false
