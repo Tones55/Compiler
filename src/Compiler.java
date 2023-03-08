@@ -3,14 +3,11 @@ import java.util.Scanner;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import java.time.LocalDateTime;
-
 public class Compiler {
 
     public static int fileLine = 0;
     public static void main(String[] args) {
 
-        int start = LocalDateTime.now().getNano();
         System.out.println(); // for readability in output console
 
         boolean verbose = false; 
@@ -72,12 +69,10 @@ public class Compiler {
             fileLine++;
             output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
             if (verbose) {
-            System.out.println("Program " + i + ": " + output);
+                System.out.println("Program " + i + ": " + output);
             }
-        }
-        //print compilation time
-        int stop = LocalDateTime.now().getNano();
-        System.out.println("\nCompilation Time: " + ((stop - start)/1000000.0) + " milisecons\n");    }
+        } 
+    }
 
     private static void printArrayList(ArrayList<String> list){
         //used to pint an arraylist line by line
