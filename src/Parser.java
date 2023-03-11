@@ -41,6 +41,21 @@ public class Parser {
         }
     }
 
+    private static void match(String[] expected) {
+        boolean matchfound = false;
+        for (String i : expected) {
+            if (tokens.get(tokenIndex).getValue().equals(expected)) {
+                addNode(i);
+                tokenIndex++;
+                matchfound = true;
+                break;
+            }
+        }
+        if (!matchfound) {
+            //error
+        }
+    }
+
     private static void moveUp() {
         currentNode = (DefaultMutableTreeNode) currentNode.getParent();
     }
@@ -92,7 +107,23 @@ public class Parser {
     }
 
     private static void parseStatement () {
-
+        addNode("Statement");
+        if (tokens.get(tokenIndex).getValue().equals("print")) {
+            parsePrintStatement();
+        }
+        else if (tokens.get(tokenIndex).getValue().equals("")) { // need something to identify a id
+            parseAssignmentStatement();
+        }
+        else if (tokens.get(tokenIndex).getValue().equals("")) { // identify type name
+            parseVariableDeclaration();
+        }
+        else if (tokens.get(tokenIndex).getValue().equals("while")) {
+            parseWhileStatement();
+        }
+        else {
+            parseIfStatement();
+        }
+        moveUp();
     }
 
     private static void parsePrintStatement () {
@@ -203,21 +234,17 @@ public class Parser {
 
     private static void parseType () {
         addNode("Type" , true);
-        if (tokens.get(tokenIndex).getValue().equals("int")) {
-            match("int");
-        }
-        else if (tokens.get(tokenIndex).getValue().equals("string")) {
-            match("string");
-        }
-        else {
-            match("boolean");
-        }
+        String[] expected = {"int" , "string" , "boolean"};
+        match(expected);
         moveUp();
     }
 
     private static void parseChar () {
         addNode("Char" , true);
-
+        String[] expected = {"a" , "b" , "c" , "d" , "e" , "f" , "g" , "h" , "i" , "j" , "k" ,
+         "l" , "m" , "n" , "o" , "p" , "q" , "r" , "s" , "t" , "u" , "v" , "w" , "x" , "y" , "z"};
+        match(expected);
+        moveUp();
     }
 
     private static void parseSpace () {
@@ -228,29 +255,22 @@ public class Parser {
 
     private static void parseDigit () {
         addNode("Digit" , true);
-        //help
-
+        String[] expected = {"0" , "1" , "2" , "3" , "4" , "5" , "6" , "7" , "8" , "9"};
+        match(expected);
+        moveUp();
     }
 
     private static void parseBooleanOperator () {
         addNode("Boolean Operator" , true);
-        if (tokens.get(tokenIndex).getValue().equals("==")) {
-            match("==");
-        }
-        else {
-            match("!=");
-        }
+        String[] expected = {"==" , "!="};
+        match(expected);
         moveUp();
     }
 
     private static void parseBooleanValue () {
         addNode("Boolean Value" , true);
-        if (tokens.get(tokenIndex).getValue().equals("true")) {
-            match("true");
-        }
-        else {
-            match("false");
-        }
+        String[] expected = {"true" , "false"};
+        match(expected);
         moveUp();
     }
 
