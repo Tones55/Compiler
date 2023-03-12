@@ -1,57 +1,13 @@
-{a!2}$
 {
-    /* test keywords */
-    print while if int string boolean true false
-    /* test identifiers */
-    a b c d e f g h i j k l m n o p q r s t u v w x y z
-    /* test symbols */
-    { ( ) = == != + }
-    /* test digits */
-    0 1 2 3 4 5 6 7 8 9
-    /* test characters and quotes */
-    "a b c d e f g h i j k l m n o p q r s t u v w x y z"
+    print(a)
+    x = "hi friend"
+    boolean b 
+    b = true
+    while (x == "hi") {
+        if (b != false) {
+            a = 2 + 1
+            x = "goodbye pal"
+        }
+    }
+    {}
 }$
-{
-    string "abc"
-    "xyz" string a
-}$
-{{{{{{}}}}}}$
-{{{{{{}}} /* comments are ignored */ }}}}$
-{ a /* @ symbol error */ int @ string s = "goodbye"}$
-{
-    int a
-    a = a
-    string b = "hello world"
-    a = b
-}$
-{
-inta=2
-}$
-{
-    int a = "hello world"
-    string b = 1
-    garbanarcle
-    7
-    "toot
-}$
-{
-    "no numbers 1"
-}$
-{
-    "not a keyword int"
-}$
-{
-    "no symbols allowed +}"   
-}$
-{
-    /* single digits */
-    1234567890
-}$
-{
-    /* no spaces needed */
-    intx=1stringb=2whilewprintif
-}$
-{
-/* I expect 2 warnings
-    string s = "NO CAPS ALLOWED bad string input"
-}
