@@ -3,7 +3,7 @@ import java.util.regex.Matcher;
 
 public class PatternMatcher {
 
-    private static Pattern explicitIdentifier = Pattern.compile("a|c|d|e|g|h|j|k|l|m|n|o|p|q|r|u|v|x|y|z"); // used to match identifiers that can not be keywords
+    private static Pattern explicitIdentifier = Pattern.compile("a|c|d|e|g|h|j|k|l|m|n|o|q|r|u|v|x|y|z"); // used to match identifiers that can not be keywords
     private static Pattern keyword = Pattern.compile("print|while|if|int|string|boolean|true|false");
     private static Pattern identifier = Pattern.compile("[a-z]");
     private static Pattern symbol = Pattern.compile("\\{|\\}|\\(|\\)|==|!=|\\+");
