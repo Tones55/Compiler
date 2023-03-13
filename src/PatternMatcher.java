@@ -94,6 +94,7 @@ public class PatternMatcher {
         // it never loops so continue sends it to the return statement
         for (int i = 0; i < 1; i++) {
             if(m.matches()){
+                input = spaceHelper(input);
                 Lexer.updateToken("Character" , input , 1);
                 matchName = "Character";
                 continue;
@@ -106,5 +107,12 @@ public class PatternMatcher {
             }
         }
         return matchName;
+    }
+
+    private static String spaceHelper(String input) {
+        if (input.equals(" ")) {
+            input = "_";
+        }
+        return input;
     }
 }
