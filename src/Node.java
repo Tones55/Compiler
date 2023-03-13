@@ -8,10 +8,6 @@ public class Node {
         tokenPointer = token;
     }
 
-    public static Node createNode(String label , Token token) {
-        return new Node(label , token);
-    }
-
     public Token getToken() {
         return tokenPointer;
     }
