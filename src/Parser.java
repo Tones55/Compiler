@@ -13,6 +13,8 @@ public class Parser {
     private static DefaultMutableTreeNode currentNode;
     private static DefaultMutableTreeNode displayableTreeRoot;
     private static DefaultMutableTreeNode displayableTreeCurrentNode;
+
+    private static int depth = 0;
     
     public static DefaultMutableTreeNode doParse (ArrayList<Token> lexTokens) {
         tokens = lexTokens;
@@ -38,7 +40,7 @@ public class Parser {
     // prints out the generated CST in text and GUI form
     private static void printCST() {
         System.out.println("Parser: Printing CST...");
-        TreeGraphics.createAndShowGUI(root);
+        TreeGraphics.createAndShowGUI(displayableTreeRoot);
 
         Enumeration<TreeNode> e = root.preorderEnumeration();
         while (e.hasMoreElements()) {
@@ -48,6 +50,9 @@ public class Parser {
             }
             System.out.println(((String) node.getUserObject()).split(" ")[0]);
         }
+        
+        // should print <Program> when it works correctly
+        System.out.println("\n" + currentNode.getUserObject());
     }
 
     // used to convert a '_' to 'SPACE'
@@ -67,7 +72,9 @@ public class Parser {
             tokenIndex++;
         }
         else {
-            //error
+            // error
+            hasError = true;
+            System.out.println("expected: " + expected + " but got: " + tokens.get(tokenIndex).getValue() + " at position: " + tokens.get(tokenIndex).getPosition());
         }
     }
 
@@ -84,7 +91,8 @@ public class Parser {
             }
         }
         if (!matchfound) {
-            //error
+            // error
+            hasError = true;
         }
     }
 
@@ -92,6 +100,8 @@ public class Parser {
     private static void moveUp() {
         currentNode = (DefaultMutableTreeNode) currentNode.getParent();
         displayableTreeCurrentNode = (DefaultMutableTreeNode) displayableTreeCurrentNode.getParent();
+
+        depth--;
     }
 
     // add a node after a match
@@ -102,9 +112,11 @@ public class Parser {
         DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(value + " " + pos.getLine() + " " + pos.getColumn() + " " + name);
         currentNode.add(newNode);
         
-        DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode(name);
+        DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode("[" + value + "]");
         displayableTreeCurrentNode.add(newGNode);
         displayableTreeCurrentNode = newGNode;
+
+        depth++;
     }
 
     // add root node
@@ -114,6 +126,8 @@ public class Parser {
 
            displayableTreeRoot = new DefaultMutableTreeNode(name);
            displayableTreeCurrentNode = displayableTreeRoot;
+
+           depth++;
     }
 
     //add a node without a token
@@ -125,6 +139,8 @@ public class Parser {
         DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode(name);
         displayableTreeCurrentNode.add(newGNode);
         displayableTreeCurrentNode = newGNode;
+
+        depth++;
     }
 
     private static void parseProgram () {
@@ -139,6 +155,7 @@ public class Parser {
         addNode("<Block>" , true);
         match("{");
         parseStatementList();
+        System.out.println("can now match a }");
         match("}");
         moveUp();
     }
@@ -146,11 +163,14 @@ public class Parser {
     private static void parseStatementList () {
         if (verbose) { System.out.println("Parser: parseStatementList()"); }
         addNode("<Statement_List>" , true);
+        
         if (tokens.size() == tokenIndex + 1) {
-            //error
+            // error
+            hasError = true;
+            return;
         }
-        else if (tokens.get(tokenIndex).getValue().equals("}") ) {
-            //do nothing
+        else if (tokens.get(tokenIndex + 1).getValue().equals("}") ) {
+            // do nothing
         }
         else {
             parseStatement();
@@ -181,7 +201,8 @@ public class Parser {
             parseBlock();
         }
         else {
-            //error
+            // error
+            hasError = true;
         }
         moveUp();
     }
@@ -247,7 +268,8 @@ public class Parser {
             parseId();
         }
         else {
-            //error
+            // error
+            hasError = true;
         }
         moveUp();
     }
@@ -257,7 +279,8 @@ public class Parser {
         addNode("<Int_Expression>" , true);
         parseDigit();
         if (tokens.size() < tokenIndex + 1) {
-            //error
+            // error
+            hasError = true;
         }
         else {
             if (tokens.get(tokenIndex).getValue().equals("+")) {
@@ -295,7 +318,7 @@ public class Parser {
 
     private static void parseId () {
         if (verbose) { System.out.println("Parser: parseId()"); }
-        addNode("<Id>");
+        addNode("<Id>" , true);
         parseChar();
         moveUp();
     }
@@ -313,9 +336,7 @@ public class Parser {
                 parseCharList();
             }
         }
-        else {
-            //nothing
-        }
+        else {} // do nothing
         moveUp();
     }
 
@@ -324,6 +345,7 @@ public class Parser {
         addNode("<Type>" , true);
         String[] expected = {"int" , "string" , "boolean"};
         match(expected);
+        moveUp();
     }
 
     private static void parseChar () {
@@ -332,12 +354,14 @@ public class Parser {
         String[] expected = {"a" , "b" , "c" , "d" , "e" , "f" , "g" , "h" , "i" , "j" , "k" ,
          "l" , "m" , "n" , "o" , "p" , "q" , "r" , "s" , "t" , "u" , "v" , "w" , "x" , "y" , "z"};
         match(expected);
+        moveUp();
     }
 
     private static void parseSpace () {
         if (verbose) { System.out.println("Parser: parseSpace()"); }
         addNode("<Space>" , true);
         match("_");
+        moveUp();
     }
 
     private static void parseDigit () {
@@ -345,6 +369,7 @@ public class Parser {
         addNode("<Digit>" , true);
         String[] expected = {"0" , "1" , "2" , "3" , "4" , "5" , "6" , "7" , "8" , "9"};
         match(expected);
+        moveUp();
     }
 
     private static void parseBooleanOperator () {
@@ -352,6 +377,7 @@ public class Parser {
         addNode("<Boolean_Operator>" , true);
         String[] expected = {"==" , "!="};
         match(expected);
+        moveUp();
     }
 
     private static void parseBooleanValue () {
@@ -359,11 +385,13 @@ public class Parser {
         addNode("<Boolean_Value>" , true);
         String[] expected = {"true" , "false"};
         match(expected);
+        moveUp();
     }
 
     private static void parseIntegerOperator () {
         if (verbose) { System.out.println("Parser: parseIntegerOperator()"); }
         addNode("<Integer_Operator>" , true);
         match("+");
+        moveUp();
     }
 }
