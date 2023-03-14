@@ -8,3 +8,5 @@ PatternMatcher.class
 Position.class
 SemanticAnalysis.class
 Token.class
+Node.class
+TreeGraphics.class
