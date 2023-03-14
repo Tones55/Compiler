@@ -6,7 +6,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class Parser {
 
     private static boolean verbose = true;
-    private static boolean nogui = false;
+    //private static boolean nogui = false;
     private static boolean hasError;
     private static ArrayList<Token> tokens;
     private static int tokenIndex;
@@ -55,7 +55,7 @@ public class Parser {
     // prints out the generated CST in text and GUI form
     private static void printCST() {
         System.out.println("Parser: Printing CST...");
-        if (!nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
+        if (!Compiler.nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
 
         Enumeration<TreeNode> e = root.preorderEnumeration();
         while (e.hasMoreElements()) {
@@ -65,6 +65,7 @@ public class Parser {
             }
             System.out.println(((String) node.getUserObject()).split(" ")[0]);
         }
+        System.out.println();
     }
 
     // used to convert a '_' to 'SPACE'

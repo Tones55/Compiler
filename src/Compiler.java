@@ -6,10 +6,12 @@ import java.io.FileNotFoundException;
 public class Compiler {
 
     public static int fileLine = 0;
+    public static boolean nogui;
     public static void main(String[] args) {
 
         System.out.println(); // for readability in output console
 
+        nogui = nogui(args);
         boolean verbose = false; 
         String output;
         ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); 
@@ -74,10 +76,19 @@ public class Compiler {
         } 
     }
 
-    private static void printArrayList(ArrayList<String> list){
+    private static void printArrayList(ArrayList<String> list) {
         //used to pint an arraylist line by line
         for(int i=0; i<list.size(); i++){
             System.out.println(list.get(i));
+        }
+    }
+
+    private static boolean nogui(String[] args) {
+        if (args.length == 1) {
+            return true;
+        }
+        else {
+            return Boolean.parseBoolean(args[1]);
         }
     }
 }
