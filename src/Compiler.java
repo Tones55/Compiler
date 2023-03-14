@@ -6,12 +6,9 @@ import java.io.FileNotFoundException;
 public class Compiler {
 
     public static int fileLine = 0;
-    public static boolean nogui;
     public static void main(String[] args) {
 
         System.out.println(); // for readability in output console
-
-        nogui = Boolean.parseBoolean(args[1]);
 
         boolean verbose = false; 
         String output;
@@ -83,5 +80,4 @@ public class Compiler {
             System.out.println(list.get(i));
         }
     }
-
 }
