@@ -1,3 +1,4 @@
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import javax.swing.tree.TreeNode;
@@ -14,8 +15,6 @@ public class Parser {
     private static DefaultMutableTreeNode displayableTreeRoot;
     private static DefaultMutableTreeNode displayableTreeCurrentNode;
 
-    private static int depth = 0;
-    
     public static DefaultMutableTreeNode doParse (ArrayList<Token> lexTokens) {
         tokens = lexTokens;
         tokenIndex = 0;
@@ -40,7 +39,7 @@ public class Parser {
     // prints out the generated CST in text and GUI form
     private static void printCST() {
         System.out.println("Parser: Printing CST...");
-        TreeGraphics.createAndShowGUI(displayableTreeRoot);
+        if (!Compiler.nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
 
         Enumeration<TreeNode> e = root.preorderEnumeration();
         while (e.hasMoreElements()) {
@@ -100,8 +99,6 @@ public class Parser {
     private static void moveUp() {
         currentNode = (DefaultMutableTreeNode) currentNode.getParent();
         displayableTreeCurrentNode = (DefaultMutableTreeNode) displayableTreeCurrentNode.getParent();
-
-        depth--;
     }
 
     // add a node after a match
@@ -115,8 +112,6 @@ public class Parser {
         DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode("[" + value + "]");
         displayableTreeCurrentNode.add(newGNode);
         displayableTreeCurrentNode = newGNode;
-
-        depth++;
     }
 
     // add root node
@@ -126,8 +121,6 @@ public class Parser {
 
            displayableTreeRoot = new DefaultMutableTreeNode(name);
            displayableTreeCurrentNode = displayableTreeRoot;
-
-           depth++;
     }
 
     //add a node without a token
@@ -139,8 +132,6 @@ public class Parser {
         DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode(name);
         displayableTreeCurrentNode.add(newGNode);
         displayableTreeCurrentNode = newGNode;
-
-        depth++;
     }
 
     private static void parseProgram () {
