@@ -44,7 +44,7 @@ inta=2
     "not a keyword int"
 }$
 {
-    "no symbols allowed +}"   
+    "no symbols allowed +"   
 }$
 {
     /* single digits */
@@ -61,3 +61,16 @@ inta=2
 ------------------------------------------------------------------------------------
 Parser:
 ------------------------------------------------------------------------------------
+{
+    print(a)
+    x = "hi friend"
+    boolean b 
+    b = true
+    while (x == "hi") {
+        if (b != false) {
+            a = 2 + 1
+            x = "goodbye pal"
+        }
+    }
+    {}
+}$
