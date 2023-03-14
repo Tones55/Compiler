@@ -21,8 +21,3 @@ https://www.labouseur.com/courses/compilers/grammar.pdf
 [Project 2](https://www.labouseur.com/courses/compilers/project2.pdf)  
 [Project 3](https://www.labouseur.com/courses/compilers/project3.pdf)  
 [Project 4](https://www.labouseur.com/courses/compilers/project4.pdf)  
-  
-## Note for Project 2  
-Currently the GUI can only show one of the program that gets compiled.  
-As a GUI was not a requirement, I opted to work on it later.  
-You can enter a second arg of true to disable the GUI.
