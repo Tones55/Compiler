@@ -72,5 +72,14 @@ Parser:
             x = "goodbye pal"
         }
     }
-    {}
 }$
+{{{{{{}}}}}}$
+{
+    print (a)
+    {
+        a = "poop"
+    }
+}$
+{
+    print (yy)
+}
