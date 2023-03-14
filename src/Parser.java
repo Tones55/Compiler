@@ -6,7 +6,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class Parser {
 
     private static boolean verbose = true;
-    private static boolean nogui = true;
+    private static boolean nogui = false;
     private static boolean hasError;
     private static ArrayList<Token> tokens;
     private static int tokenIndex;
@@ -19,11 +19,13 @@ public class Parser {
         tokens = lexTokens;
         tokenIndex = 0;
 
+        // initalize for program
         root = null;
         currentNode = null;
         displayableTreeRoot = null;
         displayableTreeCurrentNode = null;
 
+        // if there was  a lex error don't parse
         if (tokens == null) {
             hasError = true;
         }
@@ -34,6 +36,8 @@ public class Parser {
             System.out.println("Parser: Parsing program...");
             parseProgram();
             if (verbose) { System.out.println("\n"); }
+
+            // if there was a parse error don't print CST
             if (hasError) {
                 System.out.println("Parser: Error found, CST not generated \n");
             }
@@ -51,7 +55,7 @@ public class Parser {
     // prints out the generated CST in text and GUI form
     private static void printCST() {
         System.out.println("Parser: Printing CST...");
-        if (!nogui) { TreeGraphics.createAndShowGUI(root); }
+        if (!nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
 
         Enumeration<TreeNode> e = root.preorderEnumeration();
         while (e.hasMoreElements()) {
@@ -81,7 +85,6 @@ public class Parser {
             tokenIndex++;
         }
         else {
-            // error
             hasError = true;
             System.out.println("expected: " + expected + " but got: " + tokens.get(tokenIndex).getValue() + " at position: " + tokens.get(tokenIndex).getPosition());
         }
@@ -101,7 +104,6 @@ public class Parser {
             }
         }
         if (!matchfound) {
-            // error
             hasError = true;
             System.out.println("expected one of: " + expected + " but got: " + tokens.get(tokenIndex).getValue() + " at position: " + tokens.get(tokenIndex).getPosition());
         }
@@ -123,7 +125,6 @@ public class Parser {
         
         DefaultMutableTreeNode newGNode = new DefaultMutableTreeNode("[" + value + "]");
         displayableTreeCurrentNode.add(newGNode);
-        displayableTreeCurrentNode = newGNode;
     }
 
     // add root node
@@ -175,18 +176,14 @@ public class Parser {
         addNode("<Statement_List>" , true);
         
         if (tokens.size() == tokenIndex) {
-            // error
+            System.out.println("Parser: Error: Unexpected EOF , expected a <Statement List> found near:" + tokens.get(tokenIndex -1).getPosition());
             hasError = true;
             return;
         }
-        else if (tokens.get(tokenIndex).getValue().equals("}") ) {
-            // do nothing
-        }
+        else if (tokens.get(tokenIndex).getValue().equals("}") ) {} // do nothing
         else {
             parseStatement(); 
-            if (lastNode().equals("}")) {
-                // do nothing
-            }
+            if (lastNode().equals("}")) {} // do nothing
             else {
                 parseStatementList();
             }
@@ -217,8 +214,9 @@ public class Parser {
             parseBlock();
         }
         else {
-            // error
             hasError = true;
+            System.out.println("Parser: invalid statement, expected one of [<Print Statement> , <Assignment Statement> , <Variable Decleration> ," + 
+                "<While Statement> , <If Statement>], found near " + tokens.get(tokenIndex).getPosition());
         }
         moveUp();
     }
@@ -290,7 +288,8 @@ public class Parser {
             parseId();
         }
         else {
-            // error
+            System.out.println("Parser: invalid expression, expected one of [<Int Expression> , <String Expression> , <Boolean Expression> ," + 
+                " <Identifier>], found near " + tokens.get(tokenIndex).getPosition());
             hasError = true;
         }
         moveUp();
@@ -302,7 +301,7 @@ public class Parser {
         addNode("<Int_Expression>" , true);
         parseDigit();
         if (tokens.size() < tokenIndex + 1) {
-            // error
+            System.out.println("Parser: Error: Unexpected EOF , expected a <Int Expresison> found near:" + tokens.get(tokenIndex -1).getPosition());
             hasError = true;
         }
         else {

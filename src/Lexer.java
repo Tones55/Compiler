@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class Lexer {
 
-    private static boolean verbose = false;
+    private static boolean verbose = true;
     private static ArrayList<String> program;
     private static ArrayList<Token> tokens;
     private static Token lastToken;
