@@ -5,8 +5,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class Parser {
 
+    private static final boolean nogui = false;
     private static boolean verbose = true;
-    //private static boolean nogui = false;
     private static boolean hasError;
     private static ArrayList<Token> tokens;
     private static int tokenIndex;
@@ -55,7 +55,7 @@ public class Parser {
     // prints out the generated CST in text and GUI form
     private static void printCST() {
         System.out.println("Parser: Printing CST...");
-        if (!Compiler.nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
+        if (!nogui) { TreeGraphics.createAndShowGUI(displayableTreeRoot); }
 
         Enumeration<TreeNode> e = root.preorderEnumeration();
         while (e.hasMoreElements()) {
@@ -106,8 +106,17 @@ public class Parser {
         }
         if (!matchfound) {
             hasError = true;
-            System.out.println("expected one of: " + expected + " but got: " + tokens.get(tokenIndex).getValue() + " at position: " + tokens.get(tokenIndex).getPosition());
+            System.out.println("expected one of: " + arrToString(expected) + " but got: " + tokens.get(tokenIndex).getValue() + " at position: " + tokens.get(tokenIndex).getPosition());
         }
+    }
+
+    private static String arrToString(String[] arr) {
+        String s = "[";
+        for (String i : arr) {
+            s += i + " , ";
+        }
+        s = s.substring(0,s.length()-3) + "]";
+        return s;
     }
 
     // traverse the tree up one level
@@ -184,10 +193,7 @@ public class Parser {
         else if (tokens.get(tokenIndex).getValue().equals("}") ) {} // do nothing
         else {
             parseStatement(); 
-            if (lastNode().equals("}")) {} // do nothing
-            else {
-                parseStatementList();
-            }
+            parseStatementList();
         }
         moveUp();
     }
