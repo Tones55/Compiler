@@ -23,6 +23,6 @@ https://www.labouseur.com/courses/compilers/grammar.pdf
 [Project 4](https://www.labouseur.com/courses/compilers/project4.pdf)  
   
 ## Note for Project 2  
-Currently the GUI can only show one of the program that gets compiled.  
-As a GUI was not a requirement, I opted to work on it later.  
-You can enter a second arg of true to disable the GUI.
+I worked on a GUI to display the CST but opted to not include it  
+because I was unable to get it to work properly before the deadline.  
+I currently have no plans to finish it.
