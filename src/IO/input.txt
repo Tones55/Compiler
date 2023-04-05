@@ -1,22 +1,2 @@
-{
-    print(a)
-    x = "hi friend"
-    boolean b 
-    b = true
-    while (x == "hi") {
-        if (b != false) {
-            a = 2 + 1
-            x = "goodbye pal"
-        }
-    }
-}$
-{{{{{{}}}}}}$
-{
-    print (a)
-    {
-        a = "poop"
-    }
-}$
-{
-    print (yy)
-}
+{intfintif=2}$
+{string 1}$
