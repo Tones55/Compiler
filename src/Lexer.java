@@ -102,7 +102,7 @@ public class Lexer {
                 }
                 else {
                     if (currentMatch.equals("Boundry") | currentMatch.equals("Quote") | 
-                    currentMatch.equals("symbol") | currentMatch.equals("Assign")) {
+                    currentMatch.equals("Symbol") | currentMatch.equals("Assign")) {
                         // if a token was found add the token and go to "Clean up"
                         if(lastToken != null){
                             break;
