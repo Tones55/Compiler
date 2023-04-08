@@ -5,9 +5,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 public class Parser {
 
-    private static final boolean nogui = false;
+    private static final boolean nogui = true;
     private static boolean verbose = true;
-    private static boolean hasError;
+    private static boolean hasError = false;
     private static ArrayList<Token> tokens;
     private static int tokenIndex;
     private static DefaultMutableTreeNode root;
@@ -29,9 +29,6 @@ public class Parser {
         if (tokens == null) {
             hasError = true;
         }
-        else {
-            hasError = false;
-        }
         if (!hasError) {
             System.out.println("Parser: Parsing program...");
             parseProgram();
@@ -40,6 +37,7 @@ public class Parser {
             // if there was a parse error don't print CST
             if (hasError) {
                 System.out.println("Parser: Error found, CST not generated \n");
+                root = null;
             }
             else {
                 printCST();
