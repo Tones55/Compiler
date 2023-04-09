@@ -14,8 +14,8 @@ public class SemanticAnalysis {
     private static DefaultMutableTreeNode ast;
     private static TreeNode currentCSTNode;
     private static DefaultMutableTreeNode currentASTNode;
-    private static ArrayList<DefaultMutableTreeNode> backTrackNodes = new ArrayList<DefaultMutableTreeNode>();
-    private static Pattern character = Pattern.compile("[a-z]|\\s"); // can only be found in quotes
+    private static Pattern character = Pattern.compile("[a-z]|\\s");
+    private static ArrayList<DefaultMutableTreeNode> blockBackTrackNodes = new ArrayList<DefaultMutableTreeNode>();
 
     public static String doSemanticAnalysis(DefaultMutableTreeNode root) {
         if (root == null) {
@@ -29,6 +29,7 @@ public class SemanticAnalysis {
             skipNodes(2);
             ast = new DefaultMutableTreeNode(currentCSTNode.toString());
             currentASTNode = ast;
+            //blockBackTrackNodes.add(currentASTNode);
             if (verbose) {System.out.println("Added: " + currentCSTNode.toString().split(" ")[0]);}
             generateAST();
             generateSymbolTable();
@@ -56,14 +57,21 @@ public class SemanticAnalysis {
 
     private static void generateAST() {
         while (e.hasMoreElements()) {
-            currentCSTNode = e.nextElement();
+            skipNodes(1);
             //System.out.println(currentASTNode);
             switch (currentCSTNode.toString().split(" ")[0]) {
                 case "<Block>":
                     addBlock();
                     break;
                 case "}":
-                    //moveUp();
+                    if (blockBackTrackNodes.size() > 0) {
+                        System.out.println("moving up AST");
+                        currentASTNode = blockBackTrackNodes.get(blockBackTrackNodes.size() - 1);
+                        blockBackTrackNodes.remove(blockBackTrackNodes.size() - 1);
+                    }
+                    else {
+                        System.out.println("End of program block");
+                    }
                     break;
                 case "<Print_Statement>":
                     addPrintStatement();
@@ -87,56 +95,50 @@ public class SemanticAnalysis {
         
     }
     private static void addBlock() {
+        blockBackTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
-    }
-    private static void moveUp() {
-        currentASTNode = backTrackNodes.get(backTrackNodes.size() - 1);
-        backTrackNodes.remove(backTrackNodes.size() - 1);
     }
     private static void addPrintStatement() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(4);
         decipherExpression();
-        moveUp();
+        currentASTNode = backTrackNode;
     }
     private static void addAssignmentStatement() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(1);
         addIdentifier();
-        skipNodes(3);
+        skipNodes(2);
         decipherExpression();
-        moveUp();
+        currentASTNode = backTrackNode;
     }
     private static void addVariableDecleration() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(2);
         addNode();
         currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(3);
         addNode();
-        moveUp();
+        currentASTNode = backTrackNode;
     }
     private static void addWhileStatement() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
         skipNodes(2);
         findBooleanType();
-        moveUp();
+        addBlock();
     }
     private static void addIfStatement() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
         skipNodes(2);
         findBooleanType();
-        moveUp();
+        addBlock();
     }
     private static void addStringExpression() {
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(4);
         while (!currentCSTNode.toString().split(" ")[0].equals("\"")) {
             Matcher m = character.matcher(currentCSTNode.toString().split(" ")[0]);
@@ -146,56 +148,65 @@ public class SemanticAnalysis {
             }
             skipNodes(1);
         }
-        moveUp();
+        currentASTNode = backTrackNode;
     }
     private static void addIntegerExpression() {
+        DefaultMutableTreeNode backTrackNode;
+        DefaultMutableTreeNode digitNode;
         skipNodes(2);
-        addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        digitNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
+        System.out.println("----------------------------------------------------------- digit");
         skipNodes(1);
         if(currentCSTNode.toString().split(" ")[0].equals("<Integer_Operator>")) {
-            skipNodes(5);
-            addNode();
+            DefaultMutableTreeNode sumNode = new DefaultMutableTreeNode("Sum_Of");
+            currentASTNode.add(sumNode);
+            currentASTNode = sumNode;
+            backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
+            currentASTNode.add(digitNode);
+            skipNodes(3);
+            decipherExpression();
+            currentASTNode = backTrackNode;
         }
-        moveUp();
+        else {
+            currentASTNode.add(digitNode);
+        }
+        
     }
     private static void addBooleanExpression() {
         DefaultMutableTreeNode tempNode = new DefaultMutableTreeNode("temp");
         currentASTNode.add(tempNode);
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
         currentASTNode = tempNode;
-        skipNodes(1);
-        addNode();
+        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipNodes(2);
+        decipherExpression();
+        skipNodes(1);
         if(currentCSTNode.toString().split(" ")[0].equals("==")) {
             currentASTNode.setUserObject("Is_Equal");
         }
-        else {
+        else if(currentCSTNode.toString().split(" ")[0].equals("!=")) {
             currentASTNode.setUserObject("Is_Not_Equal");
         }
+        else {
+            System.out.println("\nError: Invalid Boolean Operator\n");
+        }
+        skipNodes(2);
+        decipherExpression();
         skipNodes(1);
-        addNode();
-        moveUp();
+        currentASTNode = backTrackNode;
     }
     private static void addBooleanValue() {
-        skipNodes(2);
+        skipNodes(1);
         addNode();
-        backTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
-        moveUp();
+        skipNodes(1);
+        currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
     private static void addIdentifier() {
         skipNodes(2);
         addNode();
+        skipNodes(1);
         currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
 
-    //adds a node to the AST
-    private static void addNode() {
-        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
-        currentASTNode.add(newNode);
-        currentASTNode = newNode;
-        if (verbose) {System.out.println("Added: " + currentCSTNode.toString().split(" ")[0]);}
-    }
     // this method will not add nodes to the AST
     // it just figures out which expression method to call
     private static void decipherExpression() {
@@ -215,11 +226,12 @@ public class SemanticAnalysis {
         }
     }
     private static void findBooleanType() {
+        skipNodes(1);
         switch (currentCSTNode.toString().split(" ")[0]) {
             case "(":
                 addBooleanExpression();
                 break;
-            default:
+            case "<Boolean_Value>":
                 addBooleanValue();
                 break;
         }
@@ -228,6 +240,14 @@ public class SemanticAnalysis {
     private static void skipNodes(int num) {
         for (int i = 0; i < num; i++) {
             currentCSTNode = e.nextElement();
+            System.out.println("Current CST Node: " + currentCSTNode.toString().split(" ")[0]);
         }
+    }
+    //adds a node to the AST
+    private static void addNode() {
+        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
+        currentASTNode.add(newNode);
+        currentASTNode = newNode;
+        if (verbose) {System.out.println("Added: " + currentCSTNode.toString().split(" ")[0]);}
     }
 }
