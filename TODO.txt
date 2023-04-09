@@ -8,5 +8,40 @@ generate symbol table
     go through ast
     track scope, if a var is used
     report errors and warnings
+    local variables take precedence
+    no duplicate variables in same scope
+    traverse tree properly for checks
+
+add hasError to the errors and make it stop
 
 add proper return value
+
+maybe change how strings are done. check notes
+    no more expression
+    regex not needed, check if char is a letter
+
+list of all nodes in ast:
+    <Block>
+    <Print_Statement>
+    <Assignment_Statement>
+    <Variable_Decleration>
+    <While_Statement>
+    <If_Statement>
+    <String_Expression>
+
+    <Sum_Of>
+    <Is_Equal>
+    <Is_Not_Equal>
+
+    digits
+    chars
+
+    Keywords:
+        print
+        while
+        if
+        int
+        string
+        boolean
+        false
+        true

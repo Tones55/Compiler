@@ -9,6 +9,10 @@
     while (a==1) {
         a = 1 + 1 + a
     }
-    print(a)
-    print("hello")
+    print (a)
+    print ("hi")
+
+    if ((true == true) == (1 != 1)) {}
+
+    if (1 == (1 == (1 == 1))) {}
 }$
