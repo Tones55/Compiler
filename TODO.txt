@@ -1,26 +1,12 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
-use java trees
+bugfix
+	test a lot of shit
 
-Parse:
+generate symbol table
+    go through ast
+    track scope, if a var is used
+    report errors and warnings
 
-add a way to kill compilation if there is an error
-	has to go through all of them or rework how these are called
-
-build cst, check notes
-	depth first in order traversal
-
-check pages 79-83 recursive descent
-parseStart()
-parseValue()
-parseExpr()
-parseValues()
-...
-match()
-
-page 88 for example
-
-page 124 for cst
-
-check yellow warnings
+add proper return value
