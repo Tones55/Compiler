@@ -432,8 +432,4 @@ public class Parser {
         match("+");
         moveUp();
     }
-
-    private static String lastNode () {
-        return tokens.get(tokenIndex - 1).getValue();
-    }
 }
