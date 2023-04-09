@@ -216,11 +216,4 @@ public class Lexer {
             System.out.println(lastToken.toString());
         }
     }
-    private static void printTokens() {
-        for (Token t : tokens) {
-            System.out.print(t.getValue() + " ");
-        }
-        System.out.println();
-        System.out.println();
-    }
 }
