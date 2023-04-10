@@ -18,7 +18,6 @@ public class SemanticAnalysis {
     private static DefaultMutableTreeNode currentCSTNode;
     private static DefaultMutableTreeNode currentASTNode;
     private static DefaultMutableTreeNode currentSymbolTableNode;
-    private static Pattern character = Pattern.compile("[a-z]|\\s");
     private static ArrayList<DefaultMutableTreeNode> blockBackTrackNodes = new ArrayList<DefaultMutableTreeNode>();
 
     public static String doSemanticAnalysis(DefaultMutableTreeNode root) {
@@ -56,7 +55,9 @@ public class SemanticAnalysis {
         return "Semantic Analysis";
     }
 
-    /* The following code is for the AST */
+    /* 
+        The following code is for the AST 
+    */
 
     private static void printAST() {
         System.out.println("\nSemantic Analysis: Printing AST...");
@@ -156,18 +157,22 @@ public class SemanticAnalysis {
     }
     
     private static void addStringExpression() {
-        addASTNode();
-        DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
+        String str = "\"";
         skipCSTNodes(4);
         while (!currentCSTNode.toString().split(" ")[0].equals("\"")) {
-            Matcher m = character.matcher(currentCSTNode.toString().split(" ")[0]);
-            if(m.matches()) {
-                addASTNode();
-                currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
+
+            if(Character.isLetter(currentCSTNode.toString().split(" ")[0].charAt(0)) && currentCSTNode.toString().split(" ")[0].length() == 1) {
+                str += currentCSTNode.toString().split(" ")[0];
+            }
+            else if (currentCSTNode.toString().split(" ")[0].equals("SPACE")) {
+                str += "_";
             }
             skipCSTNodes(1);
         }
-        currentASTNode = backTrackNode;
+        str += "\"";
+        DefaultMutableTreeNode strNode = new DefaultMutableTreeNode(str);
+        currentASTNode.add(strNode);
+        currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
     
     private static void addIntegerExpression() {
@@ -272,7 +277,9 @@ public class SemanticAnalysis {
         if (verbose) {System.out.println("Semantic Analysis: Added to AST: " + currentCSTNode.toString().split(" ")[0]);}
     }
    
-    /* The following code is for the Symbol Table */
+    /* 
+        The following code is for the Symbol Table 
+    */
 
     private static void generateSymbolTable() {
         while(astEnumeration.hasMoreElements()) {
