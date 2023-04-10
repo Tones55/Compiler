@@ -40,7 +40,7 @@ public class Parser {
                 root = null;
             }
             else {
-                printCST();
+                if (verbose) { printCST(); }
             }
         }
         else {
