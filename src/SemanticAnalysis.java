@@ -235,9 +235,11 @@ public class SemanticAnalysis {
         skipCSTNodes(1);
         currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
-    // this method will not add nodes to the AST
-    // it just figures out which expression method to call
+
     private static void decipherExpression() {
+        // this method will not add nodes to the AST
+        // it just figures out which expression method to call
+
         switch (currentCSTNode.toString().split(" ")[0]) {
             case "<Int_Expression>":
                 addIntegerExpression();
@@ -265,14 +267,16 @@ public class SemanticAnalysis {
                 break;
         }
     }
-    // used to skip num nodes in the CST
+    
     private static void skipCSTNodes(int num) {
+        // used to skip num nodes in the CST
         for (int i = 0; i < num; i++) {
             currentCSTNode = (DefaultMutableTreeNode) cstEnumeration.nextElement();
         }
     }
-    //adds a node to the AST
+    
     private static void addASTNode() {
+        //adds a node to the AST
         DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
         currentASTNode.add(newNode);
         currentASTNode = newNode;
