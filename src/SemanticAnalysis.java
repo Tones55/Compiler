@@ -43,12 +43,11 @@ public class SemanticAnalysis {
             currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
             currentSymbolTableNode = symbolTable;
 
-            printAST();
-
             generateSymbolTable();
 
-            // printAST();
+            printAST();
             printSymbolTable();
+
             checkVariablesUsed();
         }
         else {
@@ -288,7 +287,7 @@ public class SemanticAnalysis {
     */
 
     private static void printSymbolTable() {
-        System.out.println("\nSemantic Analysis: Printing Symbol Table...");
+        System.out.println("Semantic Analysis: Printing Symbol Table...");
         // iterate through symbolTable
         // print the hash table
 
@@ -333,7 +332,7 @@ public class SemanticAnalysis {
     }
     // create a new scope when a block is found
     private static void addSymbolTableNode() {
-        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode();
+        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(new Hashtable<String , VariableInfo>());
         currentSymbolTableNode.add(newNode);
         currentSymbolTableNode = newNode;
         if (verbose) {System.out.println("Added new scope" );}
@@ -509,18 +508,27 @@ public class SemanticAnalysis {
         // return true if found, false if not found
 
         boolean found = false;
+        boolean moreToSearch = true;
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
         Hashtable<String , VariableInfo> hashTable;
 
         System.out.println("Checking variable scope for: " + currentASTNode.toString());
 
-        do {
+        while (moreToSearch && !found) {
             hashTable = (Hashtable<String , VariableInfo>) currentScope.getUserObject();
+
             if (hashTable.containsKey(variable)) {
                 found = true;
                 hashTable.get(variable).setUsed(true);
             }
-        } while (currentScope.getParent() != null && !found);
+
+            if (currentScope.getParent() != null) {
+                currentScope = (DefaultMutableTreeNode) currentScope.getParent();
+            }
+            else {
+                moreToSearch = false;
+            }
+        }
         return found;
     }
 
@@ -594,18 +602,26 @@ public class SemanticAnalysis {
     private static DefaultMutableTreeNode getScope(String variable) {
         // find the variable and return its scope
 
+        boolean moreToSearch = true;
         DefaultMutableTreeNode scope = null;
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
         Hashtable<String , VariableInfo> hashTable;
 
         System.out.println("Getting scope for: " + variable + " starting in scope: " + currentScope.toString());
 
-        do {
+        while (moreToSearch) {
             hashTable = (Hashtable<String , VariableInfo>) currentScope.getUserObject();
             if (hashTable.containsKey(variable)) {
                 scope = currentScope;
+                moreToSearch = false;
             }
-        } while (currentScope.getParent() != null && scope == null);
+            if (currentScope.getParent() != null) {
+                currentScope = (DefaultMutableTreeNode) currentScope.getParent();
+            }
+            else {
+                moreToSearch = false;
+            }
+        }
 
         if (scope == null) {
             System.out.println("--------------------------------------------------------");
@@ -648,6 +664,7 @@ public class SemanticAnalysis {
         // check if used
         // if not used, print warning
 
+        System.out.println(); // for formatting
         Enumeration<TreeNode> scopeEnumeration = symbolTable.preorderEnumeration();
 
         while (scopeEnumeration.hasMoreElements()) {
