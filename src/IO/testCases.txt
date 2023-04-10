@@ -94,9 +94,36 @@ Semantic Analysis:
         if (true==true) {}
     }
     while (1!=a) {}
-    while (a=1) {
+    while (a==1) {
         a = 1 + 1 + a
     }
-    print(a)
-    print("hello")
+    print (a)
+    print ("hello world")
+
+    if ((true == true) == (1 != 1)) {}
+}$
+{  
+    int a
+    a = 2
+    boolean b
+    if (a == 2) {
+        int b
+        b = 4
+        string a
+        a = "toot"
+        string u
+        if true {
+            int q
+        }
+    }
+    if (a != 2) {
+        int g
+        if (a == 1) {
+            string h
+            if true {
+                int k
+            }
+        }
+    }
+    print (a)
 }$
