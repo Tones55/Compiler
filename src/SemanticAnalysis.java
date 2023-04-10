@@ -3,7 +3,6 @@ import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-import java.util.Stack;
 
 public class SemanticAnalysis {
 
@@ -12,15 +11,16 @@ public class SemanticAnalysis {
     private static DefaultMutableTreeNode cst;
     private static DefaultMutableTreeNode ast;
     private static DefaultMutableTreeNode symbolTable;
-    private static Enumeration<TreeNode> cstEnumeration;
-    private static Enumeration<TreeNode> astEnumeration;
     private static DefaultMutableTreeNode currentCSTNode;
     private static DefaultMutableTreeNode currentASTNode;
     private static DefaultMutableTreeNode currentSymbolTableNode;
-    private static ArrayList<DefaultMutableTreeNode> blockBacktrackNodes = new ArrayList<DefaultMutableTreeNode>();
-    private static ArrayList<Integer> scopeBacktrackDepths = new ArrayList<Integer>();
+    private static Enumeration<TreeNode> cstEnumeration;
+    private static Enumeration<TreeNode> astEnumeration;
+    private static ArrayList<DefaultMutableTreeNode> blockBacktrackNodes;
+    private static ArrayList<Integer> scopeBacktrackDepths;
 
-    public static String doSemanticAnalysis(DefaultMutableTreeNode root) {
+    public static DefaultMutableTreeNode[] doSemanticAnalysis(DefaultMutableTreeNode root) {
+        initializeVariables();
         if (root == null) {
             hasError = true;
         }
@@ -35,10 +35,10 @@ public class SemanticAnalysis {
             ast = new DefaultMutableTreeNode(currentCSTNode.toString());
             currentASTNode = ast;
             blockBacktrackNodes.add(ast);
-            if (verbose) {System.out.println("Semantic Analysis: Added to AST: " + currentCSTNode.toString().split(" ")[0]);}
 
             generateAST();
-            System.out.println(); // For formatting
+
+            System.out.println(); // for formatting
 
             astEnumeration = ast.preorderEnumeration();
             symbolTable = new DefaultMutableTreeNode(new Hashtable<String , VariableInfo>());
@@ -48,15 +48,38 @@ public class SemanticAnalysis {
 
             generateSymbolTable();
 
-            printAST();
-            printSymbolTable();
+            if (verbose) {
+                printAST();
+                printSymbolTable(1);
+                printSymbolTable();
+            }
 
             checkVariablesUsed();
         }
         else {
             System.out.println("Semantic Analysis: Skipping Semantic Analysis due to Parse Error");
         }
-        return "Semantic Analysis";
+        if (hasError) {
+            ast = null;
+            symbolTable = null;
+        }
+
+        return new DefaultMutableTreeNode[] {ast, symbolTable};
+    }
+
+    private static void initializeVariables() {
+        verbose = true;
+        hasError = false;
+        cst = null;
+        ast = null;
+        symbolTable = null;
+        currentCSTNode = null;
+        currentASTNode = null;
+        currentSymbolTableNode = null;
+        cstEnumeration = null;
+        astEnumeration = null;
+        blockBacktrackNodes = new ArrayList<DefaultMutableTreeNode>();
+        scopeBacktrackDepths = new ArrayList<Integer>();
     }
 
     /* 
@@ -79,10 +102,14 @@ public class SemanticAnalysis {
 
     private static void generateAST() {
         while (cstEnumeration.hasMoreElements()) {
+            if (hasError) {
+                return;
+            }
+
             skipCSTNodes(1);
             switch (currentCSTNode.toString().split(" ")[0]) {
                 case "<Block>":
-                    addBlock();
+                    addBlock(1);
                     break;
                 case "}":
                     if (blockBacktrackNodes.size() > 0) {
@@ -90,7 +117,9 @@ public class SemanticAnalysis {
                         blockBacktrackNodes.remove(blockBacktrackNodes.size() - 1);
                     }
                     else {
+                        // probably cant happen
                         System.out.println("Semantic Analysis: Something went wrong with the AST");
+                        hasError = true;
                     }
                     break;
                 case "<Print_Statement>":
@@ -114,6 +143,11 @@ public class SemanticAnalysis {
 
     private static void addBlock() {
         blockBacktrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        addASTNode();
+    }
+
+    private static void addBlock(int i) {
+        blockBacktrackNodes.add(currentASTNode);
         addASTNode();
     }
     
@@ -216,7 +250,9 @@ public class SemanticAnalysis {
             currentASTNode.setUserObject("<Is_Not_Equal>");
         }
         else {
-            System.out.println("\nSemantic Analysis: Error: Invalid Boolean Operator\n");
+            // probably cant happen
+            System.out.println("\nSemantic Analysis: Error: Invalid Boolean Operator near line " + currentASTNode.getUserObject().toString().split(" ")[1] + "\n");
+            hasError = true;
         }
         skipCSTNodes(2);
         decipherExpression();
@@ -279,20 +315,18 @@ public class SemanticAnalysis {
     
     private static void addASTNode() {
         //adds a node to the AST
-        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
+        DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(currentCSTNode.toString());
         currentASTNode.add(newNode);
         currentASTNode = newNode;
-        if (verbose) {System.out.println("Semantic Analysis: Added to AST: " + currentCSTNode.toString().split(" ")[0]);}
+        System.out.println("Semantic Analysis: Added to AST: " + newNode.toString().split(" ")[0]);
     }
    
     /* 
         The following code is for the Symbol Table 
     */
 
-    private static void printSymbolTable() {
-        System.out.println("Semantic Analysis: Printing Symbol Table...");
-        // iterate through symbolTable
-        // print the hash table
+    private static void printSymbolTable(int x) {
+        System.out.println("Semantic Analysis: Printing Symbol Table Tree...");
 
         Enumeration<TreeNode> symbolTableE = symbolTable.preorderEnumeration();
 
@@ -303,16 +337,51 @@ public class SemanticAnalysis {
             }
             System.out.println(node.getUserObject().toString());
         }
+        System.out.println();
+    }
+
+    private static void printSymbolTable() {
+        System.out.println("Semantic Analysis: Printing Symbol Table...");
+
+        System.out.println("--------------------------------------");
+        System.out.println("Name\tType\tScope\tisInit\tisUsed");
+        System.out.println("--------------------------------------");
+
+        Enumeration<TreeNode> symbolTableE = symbolTable.preorderEnumeration();
+        ArrayList<Integer> scopeTracker = new ArrayList<Integer>();
+
+        while (symbolTableE.hasMoreElements()) {
+            DefaultMutableTreeNode node = (DefaultMutableTreeNode) symbolTableE.nextElement();
+            Hashtable<String, VariableInfo> scope = (Hashtable<String, VariableInfo>) node.getUserObject();
+            Enumeration<String> scopeE = scope.keys();
+
+            if (node.getLevel() > scopeTracker.size() - 1) {
+                scopeTracker.add(0);
+            }
+            else {
+                scopeTracker.set(node.getLevel(), scopeTracker.get(node.getLevel() - 1) + 1);
+            }
+
+            System.out.println(scopeTracker);
+
+            while (scopeE.hasMoreElements()) {
+                String key = scopeE.nextElement();
+                VariableInfo info = (VariableInfo) scope.get(key);
+                System.out.println(key + "\t" + info.getType() + "\t" + node.getLevel() + "," + scopeTracker.get(node.getLevel()) + "\t" + info.isInitialized() + "\t" + info.isUsed());
+            }
+        }
     }
 
     private static void generateSymbolTable() {
         while(astEnumeration.hasMoreElements()) {
+            if (hasError) {
+                return;
+            }
             nextASTNode();
 
             // makes sure that current scope can backtrack when a block is exited
             boolean correctScope = false;
             while (!correctScope) {
-                System.out.println(scopeBacktrackDepths);
                 if (currentASTNode.getLevel() <= scopeBacktrackDepths.get(scopeBacktrackDepths.size() - 1)) {
                     currentSymbolTableNode = (DefaultMutableTreeNode) currentSymbolTableNode.getParent();
                     scopeBacktrackDepths.remove(scopeBacktrackDepths.size() - 1);
@@ -350,8 +419,7 @@ public class SemanticAnalysis {
         currentSymbolTableNode.add(newNode);
         currentSymbolTableNode = newNode;
         scopeBacktrackDepths.add(currentASTNode.getLevel());
-        if (verbose) {System.out.println("Added new scope" );}
-        System.out.println(currentASTNode.getLevel());
+        System.out.println("Semantic Analysis: Added new scope to the symbol table");
     }
 
     private static void checkPrintStatement() {
@@ -360,14 +428,19 @@ public class SemanticAnalysis {
         nextASTNode();
         if (Character.isLetter(currentASTNode.getUserObject().toString().charAt(0))) {
 
-            isValid = checkVariableScope(currentASTNode.toString());
+            isValid = checkVariableScope(currentASTNode.toString().split(" ")[0]);
             if (!isValid) {
-                System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString() + " is not in scope");
+                System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString().split(" ")[0] +
+                     " is not in scope near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                hasError = true;
             }
-
-            isValid = checkVariableInitialization(currentASTNode.toString());
-            if (!isValid) {
-                System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString() + " is not initialized");
+            else {
+                isValid = checkVariableInitialization(currentASTNode.toString().split(" ")[0]);
+                if (!isValid) {
+                    System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString().split(" ")[0] +
+                     " is not initialized near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                    hasError = true;
+                }
             }
         }
         else {
@@ -377,31 +450,37 @@ public class SemanticAnalysis {
 
     private static void checkAssignmentStatement() {
         boolean isValid;
+        String variable;
 
         nextASTNode();
-        isValid = checkVariableScope(currentASTNode.toString());
+        variable = currentASTNode.toString().split(" ")[0];
+        isValid = checkVariableScope(variable);
         if (!isValid) {
-            System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString() + " is not in scope");
+            System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString().split(" ")[0] +
+                 " is not in scope near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+            hasError = true;
         }
-
-        markAsInitialized(currentASTNode.toString());
-
-        isValid = checkVariableType();
-        if (!isValid) {
-            System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString() + " is not of type " + currentASTNode.toString());
+        else {
+            markAsInitialized(variable);
+            isValid = checkVariableType(variable);
+            if (!isValid) {
+                hasError = true;
+            }
         }
     }
 
     private static void VariableDecleration() {
         boolean isValid;
         nextASTNode();
-        String type = currentASTNode.toString();
+        String type = currentASTNode.toString().split(" ")[0];
         nextASTNode();
-        String var = currentASTNode.toString();
+        String var = currentASTNode.toString().split(" ")[0];
 
         isValid = checkCurrentScope();
         if (!isValid) {
-            System.out.println("Semantic Analysis: Error: Variable " + currentASTNode.toString() + " has already been declared in this scope");
+            System.out.println("Semantic Analysis: Error: Variable " + var + " has already been declared in this scope near line " +
+                currentASTNode.getUserObject().toString().split(" ")[1]);
+            hasError = true;
         }
         else {
             addToHashTable(type , var);
@@ -409,86 +488,46 @@ public class SemanticAnalysis {
     }
     // while and if are identical
     private static void checkWhileStatement() {
-        if (checkBooleanExpression()) {
-            // nothing to check
-        }
-        else {
-            boolean isValid;
-            ArrayList<String> operands = new ArrayList<String>();
-            DefaultMutableTreeNode currentScope = currentSymbolTableNode;
-            nextASTNode();
-            nextASTNode();
-
-            do {
-                operands.add(currentASTNode.toString());
-                nextASTNode();
-            } while (currentASTNode.toString() != "<Block>");
-
-            for (int i = 0; i < operands.size(); i++) {
-                if (Character.isLetter(operands.get(i).charAt(0))) {
-
-                    isValid = checkVariableScope(operands.get(i));
-                    if (!isValid) {
-                        System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) + " is not in scope");
-                    }
-
-                    isValid = checkVariableInitialization(operands.get(i));
-                    if (!isValid) {
-                        System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) + " is not initialized");
-                    }
-
-                    // replace variable with its type in the list
-                    operands.set(i, getVariableType(currentScope, operands.get(i)));
-                }
-                else {
-                    // replace the operand with its type in the list
-                    operands.set(i, getDataType(operands.get(i)));
-                }
-            }
-
-            System.out.println("Operands: " + operands.toString());
-
-            // compare operand types
-            for (int i = 0; i < operands.size(); i += 2) {
-                if (!(operands.get(i).equals(operands.get(i + 1)))) {
-                    System.out.println("Semantic Analysis: Error: Cannot compare type: " + operands.get(i) + " with type: " + operands.get(i + 1));
-                }
-            }
-        }
-        addSymbolTableNode();
+        checkIfStatement();
     }
     // while and if are identical
     private static void checkIfStatement() {
         if (checkBooleanExpression()) {
             // nothing to check
+            nextASTNode();
         }
         else {
             boolean isValid;
             ArrayList<String> operands = new ArrayList<String>();
-            DefaultMutableTreeNode currentScope = currentSymbolTableNode;
-            nextASTNode();
             nextASTNode();
 
             do {
-                operands.add(currentASTNode.toString());
+                operands.add(currentASTNode.toString().split(" ")[0]);
                 nextASTNode();
-            } while (currentASTNode.toString() != "<Block>");
+            } while (currentASTNode.toString().split(" ")[0] != "<Block>");
 
             for (int i = 0; i < operands.size(); i++) {
-                if (Character.isLetter(operands.get(i).charAt(0))) {
+                if (Character.isLetter(operands.get(i).charAt(0)) && operands.get(i).length() == 1) {
 
                     isValid = checkVariableScope(operands.get(i));
                     if (!isValid) {
-                        System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) + " is not in scope");
+                        System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) +
+                         " is not in scope near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                        hasError = true;
+                        return;
                     }
-
-                    isValid = checkVariableInitialization(operands.get(i));
-                    if (!isValid) {
-                        System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) + " is not initialized");
+                    else {
+                        isValid = checkVariableInitialization(operands.get(i));
+                        if (!isValid) {
+                            System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) +
+                             " is not initialized near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                            hasError = true;
+                            return;
+                        }
                     }
 
                     // replace variable with its type in the list
-                    operands.set(i, getVariableType(currentScope, operands.get(i)));
+                    operands.set(i, getVariableType(getScope(operands.get(i)), operands.get(i)));
                 }
                 else {
                     // replace the operand with its type in the list
@@ -496,12 +535,13 @@ public class SemanticAnalysis {
                 }
             }
 
-            System.out.println("Operands: " + operands.toString());
-
             // compare operand types
             for (int i = 0; i < operands.size(); i += 2) {
                 if (!(operands.get(i).equals(operands.get(i + 1)))) {
-                    System.out.println("Semantic Analysis: Error: Cannot compare type: " + operands.get(i) + " with type: " + operands.get(i + 1));
+                    System.out.println("Semantic Analysis: Error: Cannot compare type: " + operands.get(i) + " with type: " + operands.get(i + 1) +
+                         " found near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                    hasError = true;
+                    return;
                 }
             }
         }
@@ -514,14 +554,11 @@ public class SemanticAnalysis {
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
         Hashtable<String , VariableInfo> hashTable;
 
-        System.out.println("Checking variable scope for: " + currentASTNode.toString());
-
         while (moreToSearch && !found) {
             hashTable = (Hashtable<String , VariableInfo>) currentScope.getUserObject();
 
             if (hashTable.containsKey(variable)) {
                 found = true;
-                hashTable.get(variable).setUsed(true);
             }
 
             if (currentScope.getParent() != null) {
@@ -536,19 +573,27 @@ public class SemanticAnalysis {
 
     private static boolean checkCurrentScope() {
         boolean found;
-        found = !((Hashtable<String , VariableInfo>) currentSymbolTableNode.getUserObject()).containsKey(currentASTNode.toString());
+        found = !((Hashtable<String , VariableInfo>) currentSymbolTableNode.getUserObject()).containsKey(currentASTNode.toString().split(" ")[0]);
         return found;
     }
 
-    private static boolean checkVariableType() {
+    private static boolean checkVariableType(String variable) {
         boolean typesMatch = false;
-        DefaultMutableTreeNode scope = getScope(currentASTNode.toString());
-        String variableType = getVariableType(scope , currentASTNode.toString());
+        DefaultMutableTreeNode scope = getScope(variable);
+        String variableType = getVariableType(scope , variable);
         nextASTNode();
-        String dataType = getDataType(currentASTNode.toString());
+        String dataType = getDataType(currentASTNode.toString().split(" ")[0]);
+
+
         if (variableType.equals(dataType)) {
             typesMatch = true;
         }
+        else {
+            System.out.println("Semantic Analysis: Error: Variable " + variable + " is of type " + variableType + " and cannot be assigned a value of type " + dataType +
+                "found near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+            hasError = true;
+        }
+
         return typesMatch;
     }
 
@@ -558,6 +603,8 @@ public class SemanticAnalysis {
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
 
         if (hashTable.get(variable).isInitialized()) {
+            hashTable.get(variable).setUsed(true);
+            System.out.println("Semantic Analysis: Variable " + variable + " has been used");
             initialized = true;
         }
         return initialized;
@@ -574,6 +621,17 @@ public class SemanticAnalysis {
         String type;
         switch (data.charAt(0)) {
             case '<':
+                if (data.charAt(1) == 'S') {
+                    type = "int";
+                }
+                else {
+                    type = "boolean";
+                }
+                break;
+            case 't':
+                type = "boolean";
+                break;
+            case 'f':
                 type = "boolean";
                 break;
             case '"':
@@ -592,8 +650,6 @@ public class SemanticAnalysis {
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
         Hashtable<String , VariableInfo> hashTable;
 
-        System.out.println("Getting scope for: " + variable + " starting in scope: " + currentScope.toString());
-
         while (moreToSearch) {
             hashTable = (Hashtable<String , VariableInfo>) currentScope.getUserObject();
             if (hashTable.containsKey(variable)) {
@@ -609,14 +665,18 @@ public class SemanticAnalysis {
         }
 
         if (scope == null) {
-            System.out.println("--------------------------------------------------------");
+            // probably not needed
+            System.out.println("Semantic Analysis: Error: Variable " + variable + " is not in scope near line " +
+                 currentASTNode.getUserObject().toString().split(" ")[1]);
+            hasError = true;
         }
 
         return scope;
     }
     // returns true for boolval and false for a comparison
     private static boolean checkBooleanExpression() {
-        if (currentASTNode.toString().equals("true") || currentASTNode.toString().equals("false")) {
+        nextASTNode();
+        if (currentASTNode.toString().split(" ")[0].equals("true") || currentASTNode.toString().split(" ")[0].equals("false")) {
             return true;
         }
         else {
@@ -626,34 +686,47 @@ public class SemanticAnalysis {
 
     private static void nextASTNode() {
         currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
-        System.out.println("Current AST Node: " + currentASTNode.toString());
     }
 
     private static void addToHashTable(String type , String var) {
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) currentSymbolTableNode.getUserObject();
         hashTable.put(var , new VariableInfo(type));
-        System.out.println("Semantic Analysis: Added to Symbol Table: " + var + " = " + hashTable.get(var));
+        System.out.println("Semantic Analysis: added Variable " + var + " of type " + type + " added to the symbol table");
     }
 
     private static void markAsInitialized(String variable) {
         DefaultMutableTreeNode scope = getScope(variable);
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
         hashTable.get(variable).setInitialized(true);
+        System.out.println("Semantic Analysis: Variable " + variable + " has been initialized");
     }
 
     private static void checkVariablesUsed() {
         System.out.println(); // for formatting
         Enumeration<TreeNode> scopeEnumeration = symbolTable.preorderEnumeration();
+        ArrayList<Integer> scopeTracker = new ArrayList<Integer>();
 
         while (scopeEnumeration.hasMoreElements()) {
             DefaultMutableTreeNode scope = (DefaultMutableTreeNode) scopeEnumeration.nextElement();
             Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
             Enumeration<String> variableEnumeration = hashTable.keys();
 
+            if (scope.getLevel() > scopeTracker.size() - 1) {
+                scopeTracker.add(0);
+            }
+            else {
+                scopeTracker.set(scope.getLevel(), scopeTracker.get(scope.getLevel() - 1) + 1);
+            }
+
             while (variableEnumeration.hasMoreElements()) {
                 String variable = variableEnumeration.nextElement();
-                if (!hashTable.get(variable).isUsed()) {
-                    System.out.println("Semantic Analysis: Warning: Variable " + variable + " is declared but never used");
+                if (!hashTable.get(variable).isInitialized()) {
+                    System.out.println("Semantic Analysis: Warning: Variable " + variable + " of type " + hashTable.get(variable).getType() +
+                         " in scope " + scope.getLevel() + "," + scopeTracker.get(scope.getLevel()) + " is never initialized");
+                }
+                else if (!hashTable.get(variable).isUsed()) {
+                    System.out.println("Semantic Analysis: Warning: Variable " + variable + " of type " + hashTable.get(variable).getType() +
+                         " in scope " + scope.getLevel() + "," + scopeTracker.get(scope.getLevel()) + " is never used");
                 }
             }
         }
