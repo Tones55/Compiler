@@ -3,6 +3,7 @@ import javax.swing.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Stack;
 
 public class SemanticAnalysis {
 
@@ -16,7 +17,8 @@ public class SemanticAnalysis {
     private static DefaultMutableTreeNode currentCSTNode;
     private static DefaultMutableTreeNode currentASTNode;
     private static DefaultMutableTreeNode currentSymbolTableNode;
-    private static ArrayList<DefaultMutableTreeNode> blockBackTrackNodes = new ArrayList<DefaultMutableTreeNode>();
+    private static ArrayList<DefaultMutableTreeNode> blockBacktrackNodes = new ArrayList<DefaultMutableTreeNode>();
+    private static ArrayList<Integer> scopeBacktrackDepths = new ArrayList<Integer>();
 
     public static String doSemanticAnalysis(DefaultMutableTreeNode root) {
         if (root == null) {
@@ -32,8 +34,8 @@ public class SemanticAnalysis {
 
             ast = new DefaultMutableTreeNode(currentCSTNode.toString());
             currentASTNode = ast;
-            blockBackTrackNodes.add(ast);
-            if (verbose) {System.out.println("Semantic Analysis: Added: " + currentCSTNode.toString().split(" ")[0]);}
+            blockBacktrackNodes.add(ast);
+            if (verbose) {System.out.println("Semantic Analysis: Added to AST: " + currentCSTNode.toString().split(" ")[0]);}
 
             generateAST();
             System.out.println(); // For formatting
@@ -42,6 +44,7 @@ public class SemanticAnalysis {
             symbolTable = new DefaultMutableTreeNode(new Hashtable<String , VariableInfo>());
             currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
             currentSymbolTableNode = symbolTable;
+            scopeBacktrackDepths.add(0);
 
             generateSymbolTable();
 
@@ -82,9 +85,9 @@ public class SemanticAnalysis {
                     addBlock();
                     break;
                 case "}":
-                    if (blockBackTrackNodes.size() > 0) {
-                        currentASTNode = blockBackTrackNodes.get(blockBackTrackNodes.size() - 1);
-                        blockBackTrackNodes.remove(blockBackTrackNodes.size() - 1);
+                    if (blockBacktrackNodes.size() > 0) {
+                        currentASTNode = blockBacktrackNodes.get(blockBacktrackNodes.size() - 1);
+                        blockBacktrackNodes.remove(blockBacktrackNodes.size() - 1);
                     }
                     else {
                         System.out.println("Semantic Analysis: Something went wrong with the AST");
@@ -110,7 +113,7 @@ public class SemanticAnalysis {
     }
 
     private static void addBlock() {
-        blockBackTrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        blockBacktrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
         addASTNode();
     }
     
@@ -305,6 +308,20 @@ public class SemanticAnalysis {
     private static void generateSymbolTable() {
         while(astEnumeration.hasMoreElements()) {
             nextASTNode();
+
+            // makes sure that current scope can backtrack when a block is exited
+            boolean correctScope = false;
+            while (!correctScope) {
+                System.out.println(scopeBacktrackDepths);
+                if (currentASTNode.getLevel() <= scopeBacktrackDepths.get(scopeBacktrackDepths.size() - 1)) {
+                    currentSymbolTableNode = (DefaultMutableTreeNode) currentSymbolTableNode.getParent();
+                    scopeBacktrackDepths.remove(scopeBacktrackDepths.size() - 1);
+                }
+                else {
+                    correctScope = true;
+                }
+            }
+
             switch (currentASTNode.toString()) {
                 case "<Block>":
                     addSymbolTableNode();
@@ -324,9 +341,6 @@ public class SemanticAnalysis {
                 case "<If_Statement>":
                     checkIfStatement();
                     break;
-                case "<String_Expression>": // not needed probably
-                    checkStringExpression();
-                    break;
             }
         }
     }
@@ -335,7 +349,9 @@ public class SemanticAnalysis {
         DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(new Hashtable<String , VariableInfo>());
         currentSymbolTableNode.add(newNode);
         currentSymbolTableNode = newNode;
+        scopeBacktrackDepths.add(currentASTNode.getLevel());
         if (verbose) {System.out.println("Added new scope" );}
+        System.out.println(currentASTNode.getLevel());
     }
 
     private static void checkPrintStatement() {
@@ -391,13 +407,8 @@ public class SemanticAnalysis {
             addToHashTable(type , var);
         }
     }
-
+    // while and if are identical
     private static void checkWhileStatement() {
-        // while and if are identical
-        // add all nodes to list until <Block> is found starting with first operand (no <>)
-        // iterate through list and check all variables are in scope and initialized / change the list to just be types
-        // iterate through the list and check all comparisons are of the same type comparisons are related to index (0-1 , 2-3 , 4-5 , 6-7...)
-
         if (checkBooleanExpression()) {
             // nothing to check
         }
@@ -405,6 +416,7 @@ public class SemanticAnalysis {
             boolean isValid;
             ArrayList<String> operands = new ArrayList<String>();
             DefaultMutableTreeNode currentScope = currentSymbolTableNode;
+            nextASTNode();
             nextASTNode();
 
             do {
@@ -434,6 +446,9 @@ public class SemanticAnalysis {
                 }
             }
 
+            System.out.println("Operands: " + operands.toString());
+
+            // compare operand types
             for (int i = 0; i < operands.size(); i += 2) {
                 if (!(operands.get(i).equals(operands.get(i + 1)))) {
                     System.out.println("Semantic Analysis: Error: Cannot compare type: " + operands.get(i) + " with type: " + operands.get(i + 1));
@@ -442,13 +457,8 @@ public class SemanticAnalysis {
         }
         addSymbolTableNode();
     }
-
+    // while and if are identical
     private static void checkIfStatement() {
-        // while and if are identical
-        // add all nodes to list until <Block> is found starting with first operand (no <>)
-        // iterate through list and check all variables are in scope and initialized / change the list to just be types
-        // iterate through the list and check all comparisons are of the same type comparisons are related to index (0-1 , 2-3 , 4-5 , 6-7...)
-
         if (checkBooleanExpression()) {
             // nothing to check
         }
@@ -498,15 +508,7 @@ public class SemanticAnalysis {
         addSymbolTableNode();
     }
 
-    private static void checkStringExpression() {
-        // not needed probably
-    }
-
     private static boolean checkVariableScope(String variable) {
-        // search current scope and all parent scopes for variable
-        // mark variable as used
-        // return true if found, false if not found
-
         boolean found = false;
         boolean moreToSearch = true;
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
@@ -533,20 +535,12 @@ public class SemanticAnalysis {
     }
 
     private static boolean checkCurrentScope() {
-        // check current scope for variable
-        // return true if not found, false if found
-
         boolean found;
         found = !((Hashtable<String , VariableInfo>) currentSymbolTableNode.getUserObject()).containsKey(currentASTNode.toString());
         return found;
     }
 
     private static boolean checkVariableType() {
-        // find scope of variable
-        // send to getVariableType
-        // compare that type to the next ast node data type
-        // return true if they match, false if they don't
-
         boolean typesMatch = false;
         DefaultMutableTreeNode scope = getScope(currentASTNode.toString());
         String variableType = getVariableType(scope , currentASTNode.toString());
@@ -559,10 +553,6 @@ public class SemanticAnalysis {
     }
 
     private static boolean checkVariableInitialization(String variable) {
-        // find variable
-        // check if initialized
-        // return true if initialized, false if not initialized
-
         boolean initialized = false;
         DefaultMutableTreeNode scope = getScope(variable);
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
@@ -574,9 +564,6 @@ public class SemanticAnalysis {
     }
 
     private static String getVariableType(DefaultMutableTreeNode scope , String variable) {
-        // find variable
-        // return its type as a string
-
         String type = "";
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
         type = hashTable.get(variable).getType();
@@ -600,8 +587,6 @@ public class SemanticAnalysis {
     }
 
     private static DefaultMutableTreeNode getScope(String variable) {
-        // find the variable and return its scope
-
         boolean moreToSearch = true;
         DefaultMutableTreeNode scope = null;
         DefaultMutableTreeNode currentScope = currentSymbolTableNode;
@@ -629,10 +614,8 @@ public class SemanticAnalysis {
 
         return scope;
     }
-    
+    // returns true for boolval and false for a comparison
     private static boolean checkBooleanExpression() {
-        // returns true for boolval and false for a comparison
-
         if (currentASTNode.toString().equals("true") || currentASTNode.toString().equals("false")) {
             return true;
         }
@@ -659,11 +642,6 @@ public class SemanticAnalysis {
     }
 
     private static void checkVariablesUsed() {
-        // iterate through all scopes
-        // iterate through all variables in each scope
-        // check if used
-        // if not used, print warning
-
         System.out.println(); // for formatting
         Enumeration<TreeNode> scopeEnumeration = symbolTable.preorderEnumeration();
 
