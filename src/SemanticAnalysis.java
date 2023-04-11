@@ -217,7 +217,7 @@ public class SemanticAnalysis {
         DefaultMutableTreeNode backTrackNode;
         DefaultMutableTreeNode digitNode;
         skipCSTNodes(2);
-        digitNode = new DefaultMutableTreeNode(currentCSTNode.toString().split(" ")[0]);
+        digitNode = new DefaultMutableTreeNode(currentCSTNode.toString());
         skipCSTNodes(1);
         if(currentCSTNode.toString().split(" ")[0].equals("<Integer_Operator>")) {
             DefaultMutableTreeNode sumNode = new DefaultMutableTreeNode("<Sum_Of>");
@@ -240,9 +240,11 @@ public class SemanticAnalysis {
         currentASTNode.add(tempNode);
         currentASTNode = tempNode;
         DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
+
         skipCSTNodes(2);
         decipherExpression();
         skipCSTNodes(1);
+
         if(currentCSTNode.toString().split(" ")[0].equals("==")) {
             currentASTNode.setUserObject("<Is_Equal>");
         }
@@ -361,8 +363,6 @@ public class SemanticAnalysis {
             else {
                 scopeTracker.set(node.getLevel(), scopeTracker.get(node.getLevel() - 1) + 1);
             }
-
-            System.out.println(scopeTracker);
 
             while (scopeE.hasMoreElements()) {
                 String key = scopeE.nextElement();
@@ -500,6 +500,7 @@ public class SemanticAnalysis {
             boolean isValid;
             ArrayList<String> operands = new ArrayList<String>();
             nextASTNode();
+            int line = Integer.parseInt(currentASTNode.getUserObject().toString().split(" ")[1]);
 
             do {
                 operands.add(currentASTNode.toString().split(" ")[0]);
@@ -512,7 +513,7 @@ public class SemanticAnalysis {
                     isValid = checkVariableScope(operands.get(i));
                     if (!isValid) {
                         System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) +
-                         " is not in scope near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                         " is not in scope near line " + line);
                         hasError = true;
                         return;
                     }
@@ -520,7 +521,7 @@ public class SemanticAnalysis {
                         isValid = checkVariableInitialization(operands.get(i));
                         if (!isValid) {
                             System.out.println("Semantic Analysis: Error: Variable " + operands.get(i) +
-                             " is not initialized near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                             " is not initialized near line " + line);
                             hasError = true;
                             return;
                         }
@@ -539,7 +540,7 @@ public class SemanticAnalysis {
             for (int i = 0; i < operands.size(); i += 2) {
                 if (!(operands.get(i).equals(operands.get(i + 1)))) {
                     System.out.println("Semantic Analysis: Error: Cannot compare type: " + operands.get(i) + " with type: " + operands.get(i + 1) +
-                         " found near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+                         " found near line " + line);
                     hasError = true;
                     return;
                 }
@@ -589,8 +590,8 @@ public class SemanticAnalysis {
             typesMatch = true;
         }
         else {
-            System.out.println("Semantic Analysis: Error: Variable " + variable + " is of type " + variableType + " and cannot be assigned a value of type " + dataType +
-                "found near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
+            System.out.println("Semantic Analysis: Error: Variable " + variable + " is of type " + variableType + " and cannot be assigned a value of type " +
+                dataType + "found near line " + currentASTNode.getUserObject().toString().split(" ")[1]);
             hasError = true;
         }
 
