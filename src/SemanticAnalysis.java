@@ -18,6 +18,7 @@ public class SemanticAnalysis {
     private static Enumeration<TreeNode> astEnumeration;
     private static ArrayList<DefaultMutableTreeNode> blockBacktrackNodes;
     private static ArrayList<Integer> scopeBacktrackDepths;
+    private static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     public static DefaultMutableTreeNode[] doSemanticAnalysis(DefaultMutableTreeNode root) {
         initializeVariables();
@@ -49,9 +50,11 @@ public class SemanticAnalysis {
             generateSymbolTable();
 
             if (verbose) {
-                printAST();
-                printSymbolTable(1);
-                printSymbolTable();
+                if (!hasError) {
+                    printAST();
+                    printSymbolTable(1);
+                    printSymbolTable();
+                }
             }
 
             checkVariablesUsed();
@@ -155,7 +158,7 @@ public class SemanticAnalysis {
         addASTNode();
         DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
         skipCSTNodes(4);
-        decipherExpression();
+        decipherExpression(EMPTY_STRING_ARRAY);
         currentASTNode = backTrackNode;
     }
     
@@ -165,7 +168,7 @@ public class SemanticAnalysis {
         skipCSTNodes(1);
         addIdentifier();
         skipCSTNodes(2);
-        decipherExpression();
+        decipherExpression(EMPTY_STRING_ARRAY);
         currentASTNode = backTrackNode;
     }
     
@@ -226,7 +229,7 @@ public class SemanticAnalysis {
             backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
             currentASTNode.add(digitNode);
             skipCSTNodes(3);
-            decipherExpression();
+            decipherExpression(new String[] {"<Int_Expression>" , "<Id>"});
             currentASTNode = backTrackNode;
         }
         else {
@@ -242,7 +245,7 @@ public class SemanticAnalysis {
         DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
 
         skipCSTNodes(2);
-        decipherExpression();
+        decipherExpression(EMPTY_STRING_ARRAY);
         skipCSTNodes(1);
 
         if(currentCSTNode.toString().split(" ")[0].equals("==")) {
@@ -257,7 +260,7 @@ public class SemanticAnalysis {
             hasError = true;
         }
         skipCSTNodes(2);
-        decipherExpression();
+        decipherExpression(EMPTY_STRING_ARRAY);
         skipCSTNodes(1);
         currentASTNode = backTrackNode;
     }
@@ -276,9 +279,29 @@ public class SemanticAnalysis {
         currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
 
-    private static void decipherExpression() {
+    private static void decipherExpression(String[] expected) {
         // this method will not add nodes to the AST
         // it just figures out which expression method to call
+
+        // this code up here is only important for integer expressions
+        boolean isValid = true;
+
+        for (String s : expected) {
+            if (!(currentCSTNode.toString().split(" ")[0].equals(s))) {
+                isValid = false;
+            }
+            else {
+                isValid = true;
+                break;
+            }
+        }
+
+        if (!isValid) {
+            hasError = true;
+            System.out.print("Semantic Analysis: Error: Invalid Expression near line " + currentASTNode.getParent().getChildAt(0).toString().split(" ")[1]);
+            System.out.println(". Expected either another <Int_Expresison> or <Id>");
+        }
+        // end of integer expression checks
 
         switch (currentCSTNode.toString().split(" ")[0]) {
             case "<Int_Expression>":
