@@ -74,11 +74,10 @@ public class Compiler {
         } 
     }
 
-    private static void printArrayList(ArrayList<String> list){
+    private static void printArrayList(ArrayList<String> list) {
         //used to pint an arraylist line by line
         for(int i=0; i<list.size(); i++){
             System.out.println(list.get(i));
         }
     }
-
 }

@@ -2,7 +2,7 @@ import java.util.ArrayList;
 
 public class Lexer {
 
-    private static boolean verbose = true;
+    private static boolean verbose = false;
     private static ArrayList<String> program;
     private static ArrayList<Token> tokens;
     private static Token lastToken;
@@ -102,7 +102,7 @@ public class Lexer {
                 }
                 else {
                     if (currentMatch.equals("Boundry") | currentMatch.equals("Quote") | 
-                    currentMatch.equals("symbol") | currentMatch.equals("Assign")) {
+                    currentMatch.equals("Symbol") | currentMatch.equals("Assign")) {
                         // if a token was found add the token and go to "Clean up"
                         if(lastToken != null){
                             break;

@@ -21,3 +21,8 @@ https://www.labouseur.com/courses/compilers/grammar.pdf
 [Project 2](https://www.labouseur.com/courses/compilers/project2.pdf)  
 [Project 3](https://www.labouseur.com/courses/compilers/project3.pdf)  
 [Project 4](https://www.labouseur.com/courses/compilers/project4.pdf)  
+  
+## Note for Project 2  
+I worked on a GUI to display the CST but opted to not include it  
+because I was unable to get it to work properly before the deadline.  
+I currently have no plans to finish it.

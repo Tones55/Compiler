@@ -1,25 +1,13 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
-use java trees
+fix string spaces
 
-Parse:
+give the symbol table indexes to number/name scopes
 
-add a way to kill lex with returns
-	has to go through all of them or rework how these are called
-
-build cst, check notes
-	depth first in order traversal
-	
-recursive descent 79?
-
-check pages 79-83
-parseStart()
-parseValue()
-parseExpr()
-parseValues()
-...
-match()
-
-page 88 for example
-
+when doing == comparison
+    BNE means we can branch past block when condition fails
+when doing != comparison 
+    BNE means condition fails when result is true
+    so branch to the block
+    in between block and condition put an unconditional branch past the block
