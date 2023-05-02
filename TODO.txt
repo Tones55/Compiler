@@ -1,10 +1,13 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
-bugfix | test a lot of shit
-    
-add prints at key points
-
-add scope numers to table
-
 fix string spaces
+
+give the symbol table indexes to number/name scopes
+
+when doing == comparison
+    BNE means we can branch past block when condition fails
+when doing != comparison 
+    BNE means condition fails when result is true
+    so branch to the block
+    in between block and condition put an unconditional branch past the block

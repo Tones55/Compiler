@@ -1,29 +1,4 @@
-{  
+{
     int a
-    a = 2
-    boolean b
-    if (a == 2) {
-        int b
-        b = 4
-        string a
-        a = "toot"
-        string u
-        if true {
-            int q
-        }
-    }
-    if (a != 2) {
-        int g
-        if (a == 1) {
-            string h
-            if true {
-                int k
-            }
-        }
-    }
-    print (a)
-}$
-{   
-    string a
-    if (a == 1) {}
+    a = 2 + "what"
 }$
