@@ -63,8 +63,7 @@ public class SemanticAnalysis {
             System.out.println("Semantic Analysis: Skipping Semantic Analysis due to Parse Error");
         }
         if (hasError) {
-            ast = null;
-            symbolTable = null;
+            return null;
         }
 
         return new DefaultMutableTreeNode[] {ast, symbolTable};
