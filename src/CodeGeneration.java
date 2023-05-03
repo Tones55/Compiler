@@ -5,7 +5,7 @@ import javax.swing.tree.TreeNode;
 
 public class CodeGeneration {
 
-    //private static boolean verbose = false;
+    private static boolean verbose = true;
     private static boolean hasError;
     private static ArrayList<String> code;
     private static ArrayList<StaticTableData> staticTable;
@@ -16,7 +16,7 @@ public class CodeGeneration {
     private static DefaultMutableTreeNode currentScope;
     private static Enumeration<TreeNode> scopEnumeration;
     private static Enumeration<TreeNode> astEnumeration;
-    private static int memoryLocation;
+    private static int currentMemoryLocation;
     private static int heapDepth;
     private static int scope;
 
@@ -43,7 +43,7 @@ public class CodeGeneration {
         currentScope = symbolTable;
         scopEnumeration = symbolTable.preorderEnumeration();
         astEnumeration = ast.preorderEnumeration();
-        memoryLocation = 0x00;
+        currentMemoryLocation = 0x00;
         heapDepth = 0xFF;
         scope = 0;
     }
@@ -57,10 +57,10 @@ public class CodeGeneration {
 
     private static void generateCode() {
         while(astEnumeration.hasMoreElements()) {
-            if (memoryLocation > heapDepth) {
+            if (currentMemoryLocation > heapDepth) {
                 hasError = true;
-                return;
-            }
+            } 
+            if (hasError) { return; }
 
             nextASTNode();
             switch(currentASTNode.toString()){
@@ -96,13 +96,51 @@ public class CodeGeneration {
     }
 
     private static void exitBlock() {
-        // move up to parent scope
+        // go to parent scope
+        currentScope = (DefaultMutableTreeNode) currentScope.getParent();
     }
 
     private static void Print_Statement() {
         // op code FF 
         // 01 in x reg = print int in y reg
         // 02 in x reg = print string stored at address in y reg
+        addCodeToMemory("FF");
+
+        nextASTNode();
+        if (currentASTNode.toString().length() == 1) {
+            if (Character.isDigit(currentASTNode.toString().charAt(0))) {
+                // load x reg with 01
+                addCodeToMemory("A2");
+                addCodeToMemory("01");
+
+                // load y reg with digit
+                addCodeToMemory("A0");
+                addCodeToMemory("0" + currentASTNode.toString());
+
+                // system call
+                addCodeToMemory("FF");
+            }
+            else {
+
+            }
+        }
+        else if (currentASTNode.toString().charAt(0) == '"') {
+            heapDepth -= currentASTNode.toString().replaceAll("\"", "").length();
+            addStringToHeap(currentASTNode.toString());
+
+            // load x reg with 02
+            addCodeToMemory("A2");
+            addCodeToMemory("02");
+
+            // load y reg with pointer to string
+            addCodeToMemory("A0");
+            addCodeToMemory(Integer.toHexString(heapDepth + 1).toUpperCase());
+
+            System.out.println(Integer.toHexString(heapDepth + 1).toUpperCase());
+        }
+        else {
+            // Sum_Of();
+        }
     }
 
     private static void Assignment_Statement() {
@@ -155,20 +193,67 @@ public class CodeGeneration {
         }
     }
 
+    private static void addCodeToMemory(String hexCode) {
+        if(!code.get(currentMemoryLocation).equals("00")) {
+            hasError = true;
+            return;
+        }
+        code.set(currentMemoryLocation, hexCode);
+        currentMemoryLocation++;
+    }
+
     private static void nextASTNode() {
         if (astEnumeration.hasMoreElements()) {
             currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
         }
     }
 
+    private static void addStringToHeap(String str) {
+        String[] hexArray = stringToAscii(str);
+        int heapPointer = heapDepth;
+
+        for (String hexByte : hexArray) {
+            System.out.println("ADDED TO HEAP: " + hexByte + " AT: " + heapPointer + "");
+            if(!code.get(heapPointer).equals("00")) {
+                hasError = true;
+                return;
+            }
+            code.set(heapPointer, hexByte);
+            heapPointer++;
+        }
+        heapDepth--;
+        System.out.println(Integer.toHexString(heapDepth));
+    }
+
+    private static String[] stringToAscii(String str) {
+        str = str.substring(1, str.length() - 1);
+        str = str.replaceAll("_", " ");
+
+        if (verbose) { System.out.println(str); }
+
+        String[] hexArray = new String[str.length() + 1];
+        for (int i = 0; i < str.length(); i++) {
+            int asciiValue = (int) str.charAt(i);
+            String hexValue = Integer.toHexString(asciiValue);
+            hexArray[i] = hexValue.toUpperCase();
+        }
+        hexArray[str.length()] = "00";
+        return hexArray;
+    }
+
     private static String codeArrayToString() {
         if (hasError) {
             return "Code exceeded 256 byte limit";
         }
+        int i = 0;
         String codeString = "";
+        String testString = "";
         for (String hexByte : code) {
             codeString += hexByte + " ";
+            testString += "[" + Integer.toHexString(i) + "]: " + hexByte + " ";
+            i++;
         }
+        if (verbose) { System.out.println("\n" + testString); }
         return codeString;
     }
 }
