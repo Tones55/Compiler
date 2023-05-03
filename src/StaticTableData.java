@@ -2,10 +2,10 @@ public class StaticTableData {
     
     private String temp;
     private String var;
-    private String scope;
-    private String offset;
+    private int scope;
+    private int offset;
 
-    public StaticTableData(String temp, String var, String scope, String offset) {
+    public StaticTableData(String temp, String var, int scope, int offset) {
         this.temp = temp;
         this.var = var;
         this.scope = scope;
@@ -21,11 +21,11 @@ public class StaticTableData {
         return var;
     }
 
-    public String getScope() {
+    public int getScope() {
         return scope;
     }
 
-    public String getOffset() {
+    public int getOffset() {
         return offset;
     }
 
@@ -38,11 +38,11 @@ public class StaticTableData {
         this.var = var;
     }
 
-    public void setScope(String scope) {
+    public void setScope(int scope) {
         this.scope = scope;
     }
 
-    public void setOffset(String offset) {
+    public void setOffset(int offset) {
         this.offset = offset;
     }
 }
