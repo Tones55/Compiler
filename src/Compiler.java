@@ -50,6 +50,8 @@ public class Compiler {
                 }
             }
         }
+        scanner.close();
+
         // give warning if no $ at end of file
         if (!input.contains("$")) {
             System.out.println("Input Line: " + lineNumber + " :: Lex Warning: Missing \"$\" at the end of final program");
@@ -68,10 +70,21 @@ public class Compiler {
         for (int i = 0; i < programs.size(); i++) {
             fileLine++;
             output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
-            if (verbose) {
-                System.out.println("Program " + i + ": " + output);
+            System.out.println();
+            System.out.println("Program " + i + ": " + output);
+
+            // write output to output.txt
+            try {
+                java.io.PrintWriter writer = new java.io.PrintWriter("./src/IO/output.txt");
+                writer.println("Program " + i + ": ");
+                writer.println(output);
+                writer.println("\n");
+                writer.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
             }
         } 
+
     }
 
     private static void printArrayList(ArrayList<String> list) {
