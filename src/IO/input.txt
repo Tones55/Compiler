@@ -1,4 +1,4 @@
 {
-    int a
-    a = 2 + "what"
+    string x
+    x = "hi"
 }$

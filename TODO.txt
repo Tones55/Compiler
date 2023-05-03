@@ -1,9 +1,23 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
-fix string spaces
 
-give the symbol table indexes to number/name scopes
+preorderEnumeration through ast
+    write method for all possible code generating ast nodes
+        addASTNode();
+        currentASTNode.add
+    big success
+
+boolean are 1=true 0=false
+strings are refrences, store at end of heap
+
+track symbol table number with 2 iterators and backtrack list
+    x saves next number
+    y is current number
+    iterate x when next Enum
+    backtrack y when we go back
+
+    OR MAYBE A HASH TABLE
 
 when doing == comparison
     BNE means we can branch past block when condition fails
@@ -11,3 +25,18 @@ when doing != comparison
     BNE means condition fails when result is true
     so branch to the block
     in between block and condition put an unconditional branch past the block
+
+Possible Nodes:
+    block
+    print
+    Assignment_Statement
+    Variable_Decleration
+    While_Statement
+    If_Statement
+    String_Node
+    Sum_Of
+    digitNode
+    Boolean_Expression
+    Boolean_Value
+    Id
+
