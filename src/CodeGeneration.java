@@ -12,6 +12,7 @@ public class CodeGeneration {
     private static ArrayList<String> code;
     private static ArrayList<StaticTableData> staticTable;
     private static ArrayList<String> jumpTable;
+    private static ArrayList<Integer> scopeBacktrackDepths;
     private static DefaultMutableTreeNode ast;
     private static DefaultMutableTreeNode symbolTable;
     private static DefaultMutableTreeNode currentASTNode;
@@ -46,10 +47,11 @@ public class CodeGeneration {
         currentScope = symbolTable;
         scopEnumeration = symbolTable.preorderEnumeration();
         astEnumeration = ast.preorderEnumeration();
-        currentMemoryLocation = 0x00;
-        heapDepth = 0xFF;
         scopeNames = new Hashtable<>();
         initializeScopeNames();
+        currentMemoryLocation = 0x00;
+        heapDepth = 0xFF;
+        scopeBacktrackDepths = new ArrayList<>();
     }
 
     private static void initalizeCode() {
@@ -70,11 +72,23 @@ public class CodeGeneration {
 
     private static void generateCode() {
         while(astEnumeration.hasMoreElements()) {
+            // check for out of memory error
             if (currentMemoryLocation > heapDepth || code.size() > 256) {
                 hasError = true;
                 System.out.println("Code Generation Error: Out of Memory");
             } 
             if (hasError) { return; }
+
+            // makes sure that current scope can backtrack when a block is exited
+            boolean correctScope = false;
+            while (!correctScope) {
+                if (currentASTNode.getLevel() <= scopeBacktrackDepths.get(scopeBacktrackDepths.size() - 1)) {
+                    exitBlock();
+                }
+                else {
+                    correctScope = true;
+                }
+            }
 
             nextASTNode();
             switch(currentASTNode.toString()){
@@ -107,11 +121,13 @@ public class CodeGeneration {
     private static void enterBlock() {
         // go to proper scope
         currentScope = (DefaultMutableTreeNode) scopEnumeration.nextElement();
+        scopeBacktrackDepths.add(currentASTNode.getLevel());
     }
 
     private static void exitBlock() {
         // go to parent scope
         currentScope = (DefaultMutableTreeNode) currentScope.getParent();
+        scopeBacktrackDepths.remove(scopeBacktrackDepths.size() - 1);
     }
 
     private static void Print_Statement() { 
@@ -130,8 +146,6 @@ public class CodeGeneration {
                 // load y reg with digit
                 addCodeToMemory("A0");
                 addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
-
-                // system call
             }
             // print variable
             else {
@@ -370,7 +384,10 @@ public class CodeGeneration {
     }
 
     private static void If_Statement() {
-        // if condition is a boolval then BNE boolval compared to 1
+        // if condition is a boolval then compare that to 1
+        // if false will jump to end of if statement
+        // if true will continue to next statement
+        //
     }
 
     private static String Sum_Of(boolean first) {
