@@ -1,13 +1,6 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
-assignment statement
-
-preorderEnumeration through ast
-    write method for all possible code generating ast nodes
-        addASTNode();
-        currentASTNode.add
-    big success
 
 boolean are 1=true 0=false
 strings are refrences, store at end of heap
@@ -34,6 +27,8 @@ Possible Nodes:
     Boolean_Expression
     Boolean_Value
     Id
+
+
 
 check warnings
 
