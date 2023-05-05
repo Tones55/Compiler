@@ -448,7 +448,7 @@ public class SemanticAnalysis {
         boolean isValid;
 
         nextASTNode();
-        if (Character.isLetter(currentASTNode.getUserObject().toString().charAt(0))) {
+        if (Character.isLetter(currentASTNode.getUserObject().toString().charAt(0)) && currentASTNode.getUserObject().toString().split(" ")[0].length() == 1) {
 
             isValid = checkVariableScope(currentASTNode.toString().split(" ")[0]);
             if (!isValid) {
