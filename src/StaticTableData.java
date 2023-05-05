@@ -4,12 +4,14 @@ public class StaticTableData {
     private String var;
     private int scope;
     private int offset;
+    private boolean pointer;
 
-    public StaticTableData(String temp, String var, int scope, int offset) {
+    public StaticTableData(String temp, String var, int scope, int offset , boolean pointer) {
         this.temp = temp;
         this.var = var;
         this.scope = scope;
         this.offset = offset;
+        this.pointer = pointer;
     }
 
     // Getters
@@ -29,6 +31,10 @@ public class StaticTableData {
         return offset;
     }
 
+    public boolean getPointer() {
+        return pointer;
+    }
+
     // Setters
     public void setTemp(String temp) {
         this.temp = temp;
@@ -44,6 +50,10 @@ public class StaticTableData {
 
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+
+    public void setPointer(boolean pointer) {
+        this.pointer = pointer;
     }
 
     public String toString() {

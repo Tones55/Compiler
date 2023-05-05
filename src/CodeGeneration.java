@@ -100,8 +100,8 @@ public class CodeGeneration {
         }
     }
 
-    private static void addToStaticDataTable(String var) {
-        staticTable.add(new StaticTableData("T" + staticTable.size() , var , scopeNames.get(currentScope) , staticTable.size()));
+    private static void addToStaticDataTable(String var , boolean pointer) {
+        staticTable.add(new StaticTableData("T" + staticTable.size() , var , scopeNames.get(currentScope) , staticTable.size() , pointer));
     }
 
     private static void enterBlock() {
@@ -135,9 +135,46 @@ public class CodeGeneration {
             }
             // print variable
             else {
-                //
-                //
-                //
+                // get the location of the variable
+                String location = getVarLocation(currentASTNode.toString().split(" ")[0], scopeNames.get(currentScope));
+                // get the type of the variable
+                String varType = getVarType(currentScope ,  currentASTNode.toString().split(" ")[0]);
+
+                // if the variable is a string
+                if(varType.equals("string")) {
+                    // load x reg with 02
+                    addCodeToMemory("A2");
+                    addCodeToMemory("02");
+
+                    // load y reg with pointer to string
+                    addCodeToMemory("A0");
+                    addCodeToMemory(location);
+                }
+                // if the variable is a boolean
+                else if(varType.equals("boolean")) {
+
+                    //
+                    // FIX THIS LATER MAYBE
+                    //
+
+                    // load x reg with 01
+                    addCodeToMemory("A2");
+                    addCodeToMemory("01");
+
+                    // load y reg with data at location
+                    addCodeToMemory("A0");
+                    addCodeToMemory(location);
+                }
+                // if the variable is an int
+                else {
+                    // load x reg with 01
+                    addCodeToMemory("A2");
+                    addCodeToMemory("01");
+
+                    // load y reg with data at location
+                    addCodeToMemory("A0");
+                    addCodeToMemory(location);
+                }
             }
         }
         // print string literal
@@ -159,8 +196,7 @@ public class CodeGeneration {
             addCodeToMemory("01");
 
             // add sum code
-            Sum_Of(true);
-            String sumLocation = "00";
+            String sumLocation = Sum_Of(true);
 
             // store sum in memory
             addCodeToMemory("8D");
@@ -221,23 +257,71 @@ public class CodeGeneration {
         nextASTNode();
         // assign a sum
         if(currentASTNode.toString().charAt(0) == '<') {
+            // add sum code
+            String sumLocation = Sum_Of(true);
 
+            // store sum in the variable location
+            addCodeToMemory("8D");
+            addCodeToMemory(tempLocation);
+            addCodeToMemory("00");
         }
         // assign a string
         else if(currentASTNode.toString().charAt(0) == '"') {
+            // add string to heap
+            addStringToHeap(currentASTNode.toString());
 
+            // load acc with pointer to string
+            addCodeToMemory("A9");
+            addCodeToMemory(intToHexString(heapDepth + 1));
+
+            // store pointer to string in variable location
+            addCodeToMemory("8D");
+            addCodeToMemory(tempLocation);
+            addCodeToMemory("00");
         }
         // assign a digit
         else if(Character.isDigit(currentASTNode.toString().charAt(0))) {
+            // load acc with digit
+            addCodeToMemory("A9");
+            addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
 
+            // store acc in variable location
+            addCodeToMemory("8D");
+            addCodeToMemory(tempLocation);
+            addCodeToMemory("00");
         }
         // assign a variable
         else if(currentASTNode.toString().split(" ")[0].length() == 1) {
+            // get the temp address for the assignee variable
+            String tempLocationB = getVarLocation(currentASTNode.toString().split(" ")[0], scopeNames.get(currentScope));
 
+            // load acc with value of assignee variable
+            addCodeToMemory("AD");
+            addCodeToMemory(tempLocationB);
+            addCodeToMemory("00");
+
+            // store acc in variable location
+            addCodeToMemory("8D");
+            addCodeToMemory(tempLocation);
+            addCodeToMemory("00");
         }
         // assign a boolean
         else {
+            if(currentASTNode.toString().split(" ")[0].equals("true")) {
+                // load acc with 01
+                addCodeToMemory("A9");
+                addCodeToMemory("01");
 
+            }
+            else {
+                // load acc with 00
+                addCodeToMemory("A9");
+                addCodeToMemory("00");
+            }
+            // store acc in variable location
+            addCodeToMemory("8D");
+            addCodeToMemory(tempLocation);
+            addCodeToMemory("00");
         }
     }
 
@@ -256,7 +340,13 @@ public class CodeGeneration {
         nextASTNode();
         String varType = currentASTNode.toString().split(" ")[0];
         nextASTNode();
-        addToStaticDataTable(currentASTNode.toString().split(" ")[0]);
+
+        if(varType.equals("string")) {
+            addToStaticDataTable(currentASTNode.toString().split(" ")[0] , true);
+        }
+        else {
+            addToStaticDataTable(currentASTNode.toString().split(" ")[0] , false);
+        }
 
         // check type, if string do nothing, otherwise initialize to 0/false
         if(varType.equals("string")) {
@@ -283,11 +373,7 @@ public class CodeGeneration {
         // if condition is a boolval then BNE boolval compared to 1
     }
 
-    private static void string() {
-        // delete later ???
-    }
-
-    private static void Sum_Of(boolean first) {
+    private static String Sum_Of(boolean first) {
         // will leave result in accumulator
 
         // load acc with digit: A9 ??
@@ -346,10 +432,7 @@ public class CodeGeneration {
             else {
                 // ADC with the variable in memory
                 addCodeToMemory("6D");
-
-                addCodeToMemory("T" + ""); // search for variable in static table and get its location
-
-                addCodeToMemory("00");
+                addCodeToMemory(getVarLocation(currentASTNode.toString().split(" ")[0] , scopeNames.get(currentScope))); 
             }
         }
         // if the next operand is another Sum_Of
@@ -357,6 +440,7 @@ public class CodeGeneration {
             // do recursion
             Sum_Of(false);
         }
+        return "00";
     }
 
     private static void Boolean_Expression() {
@@ -455,6 +539,13 @@ public class CodeGeneration {
             }
         }
         return tempLocation;
+    }
+
+    private static String getVarType(DefaultMutableTreeNode scope , String variable) {
+        String type = "";
+        Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
+        type = hashTable.get(variable).getType();
+        return type;
     }
 
     private static String codeArrayToString() {
