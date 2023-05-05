@@ -1,4 +1,3 @@
 {
-    string x
-    x = "hi"
+    print(1+1+1+1)
 }$

@@ -1,6 +1,7 @@
 javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
+assignment statement
 
 preorderEnumeration through ast
     write method for all possible code generating ast nodes
@@ -40,3 +41,4 @@ Possible Nodes:
     Boolean_Value
     Id
 
+check warnings
