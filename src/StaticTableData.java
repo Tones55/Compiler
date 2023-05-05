@@ -45,4 +45,8 @@ public class StaticTableData {
     public void setOffset(int offset) {
         this.offset = offset;
     }
+
+    public String toString() {
+        return "Location: " + temp + " Var: " + var + " Scope: " + scope + " Offset: " + offset;
+    }
 }
