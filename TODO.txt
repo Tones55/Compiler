@@ -12,13 +12,7 @@ preorderEnumeration through ast
 boolean are 1=true 0=false
 strings are refrences, store at end of heap
 
-track symbol table number with 2 iterators and backtrack list
-    x saves next number
-    y is current number
-    iterate x when next Enum
-    backtrack y when we go back
-
-    OR MAYBE A HASH TABLE
+track symbol table number with A HASH TABLE
 
 when doing == comparison
     BNE means we can branch past block when condition fails
@@ -42,3 +36,5 @@ Possible Nodes:
     Id
 
 check warnings
+
+check printing boolean in a variable
