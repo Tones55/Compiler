@@ -14,26 +14,20 @@ when doing != comparison
     so branch to the block
     in between block and condition put an unconditional branch past the block
 
-Possible Nodes:
-    block
-    print
-    Assignment_Statement
-    Variable_Decleration
-    While_Statement
-    If_Statement
-    String_Node
-    Sum_Of
-    digitNode
-    Boolean_Expression
-    Boolean_Value
-    Id
 
-why does z flag not change to 0 when comparison is false
 
-lines
+
+make sure != works for all scenarios
+
+generate a message when a conditional is always true or false
+
+lines:
+    If_Statement: branch or skip code gen when condition is false
     Boolean_Expression: branch or skip code gen when condition is false
 
 comparions with string literals
+
+test every possible path through the code
 
 check warnings
 

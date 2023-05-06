@@ -13,6 +13,9 @@ public class CodeGeneration {
     private static ArrayList<StaticTableData> staticTable;
     private static ArrayList<Integer> scopeBacktrackDepths;
     private static ArrayList<Integer> jumps;
+    private static ArrayList<String> messages;
+    private static ArrayList<Integer> whileLoopStart;
+    private static ArrayList<Integer> whileLoopUntil;
     private static DefaultMutableTreeNode ast;
     private static DefaultMutableTreeNode symbolTable;
     private static DefaultMutableTreeNode currentASTNode;
@@ -24,7 +27,9 @@ public class CodeGeneration {
     private static Hashtable<String , Integer> jumpTable;
     private static int currentMemoryLocation;
     private static int heapDepth;
+    private static int skipCodeGenUntil;
     private static String[] booleansInMemory = {"00" , "00"};
+    private static boolean codeGenPaused;
 
     public static String doCodeGeneration(DefaultMutableTreeNode[] roots) {
         if (roots == null) {
@@ -46,6 +51,9 @@ public class CodeGeneration {
         staticTable = new ArrayList<>();
         scopeBacktrackDepths = new ArrayList<>();
         jumps = new ArrayList<>();
+        messages = new ArrayList<>();
+        whileLoopStart = new ArrayList<>();
+        whileLoopUntil = new ArrayList<>();
         ast = roots[0];
         symbolTable = roots[1];
         currentASTNode = ast;
@@ -58,6 +66,8 @@ public class CodeGeneration {
         currentMemoryLocation = 0x00;
         heapDepth = 0xFF;
         stringsInHeap = new Hashtable<>();
+        skipCodeGenUntil = Integer.MAX_VALUE;
+        codeGenPaused = false;
     }
 
     private static void initalizeCode() {
@@ -141,11 +151,33 @@ public class CodeGeneration {
     }
 
     private static void exitBlock() {
+        if (whileLoopUntil.size() > 0) {
+            if (whileLoopUntil.get(whileLoopUntil.size() - 1) < scopeBacktrackDepths.size()) {
+                // do nothing, still in while block
+            }
+            else {
+                // unconditional branch to the top of the while loop
+                // load x reg with 1
+                addCodeToMemory("A2");
+                addCodeToMemory("01");
+    
+                // compare x reg to 0xFF
+                addCodeToMemory("EC");
+                addCodeToMemory("FF");
+                addCodeToMemory("00");
+    
+                // branch n bytes to the start of the while loop
+                jumpTable.put("J" + jumpTable.size() , 0xFF - currentMemoryLocation + (whileLoopStart.get(whileLoopStart.size() - 1) - 1));
+                addCodeToMemory("D0");
+                addCodeToMemory("J" + (jumpTable.size()-1));
+            }
+        }
+
         // go to parent scope
         currentScope = (DefaultMutableTreeNode) currentScope.getParent();
         scopeBacktrackDepths.remove(scopeBacktrackDepths.size() - 1);
         if (jumps.size() > 0) {
-            jumps.set(jumps.size() - 1, currentMemoryLocation - jumps.get(jumps.size() - 1));
+            jumps.set(jumps.size() - 1, currentMemoryLocation - jumps.get(jumps.size() - 1) - 1);
             for (int i = jumpTable.size(); i > 0; i--) {
                 if (jumpTable.get("J" + (i - 1)) == -1) {
                     jumpTable.put("J" + (i - 1), jumps.get(jumps.size() - 1));
@@ -425,41 +457,46 @@ public class CodeGeneration {
     }
 
     private static void While_Statement() {
-        // if condition is a boolval then BNE boolval compared to 1
-    }
-
-    private static void If_Statement() {
-        // if condition is a boolval then compare that to 1
-        // if false will jump to end of if statement
-        // if true will continue to next statement
-        // if condition then go to Boolean_Expression()
-
+        whileLoopStart.add(currentMemoryLocation);
         nextASTNode();
         if (currentASTNode.toString().charAt(0) == '<') {
             Boolean_Expression();
+        }
+        else {
+            if (currentASTNode.toString().split(" ")[0].equals("false")) {
+                // skip code gen until the end of the block
+                skipBlock(true);
+            }
+            else {
+                // condition true, generate a warning for infinie loop
+                messages.add("Warning: Infinite loop detected at line " + currentASTNode.toString().split(" ")[1] + ".");
+            }
+        }
+        // add the depth of the current scope to the backtrack stack
+        whileLoopUntil.add(scopeBacktrackDepths.size() + 1);
+    }
 
+    private static void If_Statement() {
+        nextASTNode();
+        if (currentASTNode.toString().charAt(0) == '<') {
+            Boolean_Expression();
         }
         else {
             if (currentASTNode.toString().split(" ")[0].equals("false")) {
                 // if the comparison returns false
                 // branch to the end of the block
                 // or we could skip code gen until the end of the block
+                skipBlock(true);
             }
             else {
-                // condition true, continue with code generation
-                return;
+                // condition true, continue with code generation, generate a message for unneccesary conditional
+                messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
             }
         }
     }
 
     private static String Sum_Of(boolean first) {
         // will leave result in accumulator
-
-        // load acc with digit: A9 ??
-        // check next operand
-        // if digit put acc in mem, load acc with digit and ADC with that location: 6D ?? 00
-        // if var ADC with it: 6D T? XX
-        // if sum of then recursion
 
         // if it is the first operand
         if(first) {
@@ -512,6 +549,7 @@ public class CodeGeneration {
                 // ADC with the variable in memory
                 addCodeToMemory("6D");
                 addCodeToMemory(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope)); 
+                addCodeToMemory("00");
             }
         }
         // if the next operand is another Sum_Of
@@ -547,11 +585,13 @@ public class CodeGeneration {
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
                         // comparison is true so we can ignore branching code
+                        messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
                     }
                     else {
                         // if the comparison returns false
                         // branch to the end of the block
                         // or we could skip code gen until the end of the block
+                        skipBlock(true);
                     }
                     
                 }
@@ -574,11 +614,13 @@ public class CodeGeneration {
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
                         // comparison is true so we can ignore branching code
+                        messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
                     }
                     else {
                         // if the comparison returns false
                         // branch to the end of the block
                         // or we could skip code gen until the end of the block
+                        skipBlock(true);
                     }
                 }
                 // if the next operand is a variable
@@ -586,6 +628,7 @@ public class CodeGeneration {
                     // comparison must be false if the string is not in the heap
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block 
+                    skipBlock(true);
                 }
             }
         }
@@ -606,11 +649,13 @@ public class CodeGeneration {
                 }
                 if (!(firstOperand ^ secondOperand) ^ isEquivalence) {
                     // comparison is true so we can ignore branching code
+                    messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
                 }
                 else {
                     // if the comparison returns false
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block
+                    skipBlock(true);
                 }
             }
             // if the next operand is a variable
@@ -640,11 +685,13 @@ public class CodeGeneration {
                 int secondOperand = Integer.parseInt(currentASTNode.toString().split(" ")[0]);
                 if (!(firstOperand == secondOperand) ^ isEquivalence) {
                     // comparison is true so we can ignore branching code
+                    messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
                 }
                 else {
                     // if the comparison returns false
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block
+                    skipBlock(true);
                 }
             }
             // if the next operand is a variable
@@ -665,14 +712,45 @@ public class CodeGeneration {
 
             // if the next operand is a var
             if (!(Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) && currentASTNode.toString().split(" ")[0].length() == 1) {
-                // load x reg with varLocation
-                addCodeToMemory("AE");
-                addCodeToMemory(varLocation);
-                addCodeToMemory("00");
+                // ==
+                if (isEquivalence) {
+                    // load x reg with varLocation
+                    addCodeToMemory("AE");
+                    addCodeToMemory(varLocation);
+                    addCodeToMemory("00");
 
-                // compare x reg to var location and BNE
-                varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
-                compareXregToLocation(varLocation);
+                    // compare x reg to var location and BNE
+                    varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
+                    compareXregToLocation(varLocation);
+                }
+                // !=
+                else {
+                    // load x reg with varLocation
+                    addCodeToMemory("AE");
+                    addCodeToMemory(varLocation);
+                    addCodeToMemory("00");
+
+                    varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
+
+                    // compare x reg to var location
+                    addCodeToMemory("EC");
+                    addCodeToMemory(varLocation);
+                    addCodeToMemory("00");
+
+                    // branch n bytes to the block if they are not equal
+                    jumpTable.put("J" + jumpTable.size() , 7); // branch 8 bytes to start of block
+                    addCodeToMemory("D0");
+                    addCodeToMemory("J" + (jumpTable.size()-1));
+
+                    // if they are equal unconditional branch over the block
+
+                    // load x reg with 1
+                    addCodeToMemory("A2");
+                    addCodeToMemory("01");
+
+                    // compare x reg to var location and BNE
+                    compareXregToLocation("FF");
+                }
             }
             else {
                 switch(varType) {
@@ -713,6 +791,7 @@ public class CodeGeneration {
                             // cant be equal if the string is not in the heap
                             // branch to the end of the block
                             // or we could skip code gen until the end of the block
+                            skipBlock(true);
                         }
                         break; 
                 }
@@ -762,7 +841,10 @@ public class CodeGeneration {
             hasError = true;
             return;
         }
+        if (skipBlock()) { return; }
+
         code.set(currentMemoryLocation, hexCode);
+        if (verbose) { System.out.println("Added " + hexCode + " to memory location " + currentMemoryLocation); }
         currentMemoryLocation++;
     }
 
@@ -774,6 +856,11 @@ public class CodeGeneration {
     }
 
     private static void addStringToHeap(String str) {
+
+        if (skipBlock()) { return; }
+
+        if (verbose) { System.out.println("Adding string to heap: " + str);}
+
         heapDepth -= str.replaceAll("\"", "").length();
         String[] hexArray = stringToAscii(str);
         int heapPointer = heapDepth;
@@ -787,6 +874,24 @@ public class CodeGeneration {
             heapPointer++;
         }
         heapDepth--;
+    }
+
+    private static boolean skipBlock() {
+        if (skipCodeGenUntil <= scopeBacktrackDepths.size()) {
+            codeGenPaused = true;
+            return true;
+        }
+
+        if (verbose && codeGenPaused) { System.out.println("Resuming Code Generation\n"); }
+        skipCodeGenUntil = Integer.MAX_VALUE;
+        codeGenPaused = false;
+        return false;
+    }
+
+    private static void skipBlock(boolean startSkip) {
+        skipCodeGenUntil = scopeBacktrackDepths.size() + 1;
+        if (verbose) { System.out.println("Skipping code gen until exiting this block"); }
+        messages.add("Info: Conditional is always false at line " + currentASTNode.toString().split(" ")[1] + ".");
     }
 
     private static String[] stringToAscii(String str) {
@@ -840,11 +945,6 @@ public class CodeGeneration {
         }
         type = hashTable.get(variable).getType();
         return type;
-    }
-
-    private static DefaultMutableTreeNode getVarScope(String var , String type) {
-        DefaultMutableTreeNode scope = null;
-        return scope;
     }
 
     private static String codeArrayToString() {
