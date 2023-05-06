@@ -145,6 +145,9 @@ public class SemanticAnalysis {
 
     private static void addBlock() {
         blockBacktrackNodes.add((DefaultMutableTreeNode) currentASTNode.getParent());
+        while (!currentCSTNode.toString().split(" ")[0].equals("<Block>")) {
+            skipCSTNodes(1);
+        }
         addASTNode();
     }
 
@@ -212,6 +215,7 @@ public class SemanticAnalysis {
         str += "\"";
         DefaultMutableTreeNode strNode = new DefaultMutableTreeNode(str);
         currentASTNode.add(strNode);
+        System.out.println("Semantic Analysis: Added to AST: " + strNode.toString());
         currentASTNode = (DefaultMutableTreeNode) currentASTNode.getParent();
     }
     
@@ -240,12 +244,18 @@ public class SemanticAnalysis {
     private static void addBooleanExpression() {
         DefaultMutableTreeNode tempNode = new DefaultMutableTreeNode("temp");
         currentASTNode.add(tempNode);
+        System.out.println(currentASTNode);
         currentASTNode = tempNode;
         DefaultMutableTreeNode backTrackNode = (DefaultMutableTreeNode) currentASTNode.getParent();
 
         skipCSTNodes(2);
         decipherExpression(EMPTY_STRING_ARRAY);
         skipCSTNodes(1);
+
+        while (!currentCSTNode.toString().split(" ")[0].equals("==") && !currentCSTNode.toString().split(" ")[0].equals("!=")) {
+            skipCSTNodes(1);
+        }
+        currentASTNode = tempNode;
 
         if(currentCSTNode.toString().split(" ")[0].equals("==")) {
             currentASTNode.setUserObject("<Is_Equal>");
@@ -522,7 +532,10 @@ public class SemanticAnalysis {
             boolean isValid;
             ArrayList<String> operands = new ArrayList<String>();
             nextASTNode();
-            int line = Integer.parseInt(currentASTNode.getUserObject().toString().split(" ")[1]);
+            int line = -1;
+            if (currentASTNode.toString().split(" ").length > 1) {
+                line = Integer.parseInt(currentASTNode.getUserObject().toString().split(" ")[1]);
+            } 
 
             do {
                 operands.add(currentASTNode.toString().split(" ")[0]);
