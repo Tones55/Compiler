@@ -20,6 +20,7 @@ public class CodeGeneration {
     private static Enumeration<TreeNode> scopEnumeration;
     private static Enumeration<TreeNode> astEnumeration;
     private static Hashtable<DefaultMutableTreeNode , Integer> scopeNames;
+    private static Hashtable<String , String> stringsInHeap;
     private static int currentMemoryLocation;
     private static int heapDepth;
     private static String[] booleansInMemory = {"00" , "00"};
@@ -52,6 +53,7 @@ public class CodeGeneration {
         currentMemoryLocation = 0x00;
         heapDepth = 0xFF;
         scopeBacktrackDepths = new ArrayList<>();
+        stringsInHeap = new Hashtable<>();
     }
 
     private static void initalizeCode() {
@@ -82,14 +84,18 @@ public class CodeGeneration {
             // makes sure that current scope can backtrack when a block is exited
             boolean correctScope = false;
             while (!correctScope) {
-                if (currentASTNode.getLevel() <= scopeBacktrackDepths.get(scopeBacktrackDepths.size() - 1)) {
-                    exitBlock();
+                if (scopeBacktrackDepths.size() > 0) {
+                    if (currentASTNode.getLevel() < scopeBacktrackDepths.get(scopeBacktrackDepths.size() - 1)) {
+                        exitBlock();
+                    }
+                    else {
+                        correctScope = true;
+                    }
                 }
                 else {
                     correctScope = true;
                 }
             }
-
             nextASTNode();
             switch(currentASTNode.toString()){
                 case "<Block>":
@@ -161,14 +167,15 @@ public class CodeGeneration {
                     addCodeToMemory("02");
 
                     // load y reg with pointer to string
-                    addCodeToMemory("A0");
+                    addCodeToMemory("AC");
                     addCodeToMemory(location);
                 }
                 // if the variable is a boolean
                 else if(varType.equals("boolean")) {
 
                     //
-                    // FIX THIS LATER MAYBE
+                    // FIX THIS LATER (booleans are printed as 1 or 0)
+                    // if this doesnt change then change printing boolean literals
                     //
 
                     // load x reg with 01
@@ -176,7 +183,7 @@ public class CodeGeneration {
                     addCodeToMemory("01");
 
                     // load y reg with data at location
-                    addCodeToMemory("A0");
+                    addCodeToMemory("AC");
                     addCodeToMemory(location);
                 }
                 // if the variable is an int
@@ -186,22 +193,30 @@ public class CodeGeneration {
                     addCodeToMemory("01");
 
                     // load y reg with data at location
-                    addCodeToMemory("A0");
+                    addCodeToMemory("AC");
                     addCodeToMemory(location);
                 }
             }
         }
         // print string literal
         else if (currentASTNode.toString().charAt(0) == '"') {
-            addStringToHeap(currentASTNode.toString());
-
+            String strAddress = "";
+            // add string to heap if it is not already there
+            if(!(stringsInHeap.containsKey(currentASTNode.toString().replaceAll("\"", "")))) {
+                addStringToHeap(currentASTNode.toString());
+                strAddress = intToHexString(heapDepth + 1);
+            }
+            else {
+                // if the string is already in the heap then get the pointer to it
+                strAddress = stringsInHeap.get(currentASTNode.toString().replaceAll("\"", ""));
+            }
             // load x reg with 02
             addCodeToMemory("A2");
             addCodeToMemory("02");
 
             // load y reg with pointer to string
             addCodeToMemory("A0");
-            addCodeToMemory(intToHexString(heapDepth + 1));
+            addCodeToMemory(strAddress);
         }
         // print a sum
         else if(currentASTNode.toString().charAt(0) == '<') {
@@ -272,7 +287,7 @@ public class CodeGeneration {
         // assign a sum
         if(currentASTNode.toString().charAt(0) == '<') {
             // add sum code
-            String sumLocation = Sum_Of(true);
+            Sum_Of(true);
 
             // store sum in the variable location
             addCodeToMemory("8D");
@@ -281,12 +296,20 @@ public class CodeGeneration {
         }
         // assign a string
         else if(currentASTNode.toString().charAt(0) == '"') {
-            // add string to heap
-            addStringToHeap(currentASTNode.toString());
+            String strAddress = "";
+            // add string to heap if it is not already there
+            if(!(stringsInHeap.containsKey(currentASTNode.toString().replaceAll("\"", "")))) {
+                addStringToHeap(currentASTNode.toString());
+                strAddress = intToHexString(heapDepth + 1);
+            }
+            else {
+                // if the string is already in the heap then get the pointer to it
+                strAddress = stringsInHeap.get(currentASTNode.toString().replaceAll("\"", ""));
+            }
 
             // load acc with pointer to string
             addCodeToMemory("A9");
-            addCodeToMemory(intToHexString(heapDepth + 1));
+            addCodeToMemory(strAddress);
 
             // store pointer to string in variable location
             addCodeToMemory("8D");
@@ -376,7 +399,6 @@ public class CodeGeneration {
             addCodeToMemory("T" + (staticTable.size() - 1));
             addCodeToMemory("00");
         }
-        System.out.println("Added new static table entry: " + staticTable.get(staticTable.size() - 1).toString());
     }
 
     private static void While_Statement() {
@@ -387,7 +409,15 @@ public class CodeGeneration {
         // if condition is a boolval then compare that to 1
         // if false will jump to end of if statement
         // if true will continue to next statement
-        //
+        // if condition thengo to Boolean_Expression()
+
+        nextASTNode();
+        if (currentASTNode.toString().charAt(0) == '<') {
+            Boolean_Expression();
+        }
+        else {
+            // boolval
+        }
     }
 
     private static String Sum_Of(boolean first) {
@@ -461,11 +491,52 @@ public class CodeGeneration {
     }
 
     private static void Boolean_Expression() {
+        // store comparison type in isEquivalence
+        // check first operand
+        // if boolval load x reg with 0 or 1
+            // check next operand
+                // if boolval load acc with 0 or 1 and store it at 00
+                    // compare x to 00
+                // if var compare x reg to var location
+
+        // if digit load x reg with digit
+            // check next operand
+                // if digit load acc with digit and store it at 00
+                    // compare x to 00
+                // if var compare x reg to var location
+
+        // if var save its location in varLocation
+        // check vars type
+            // check next operand
+                // if digit load it to x reg
+                    // compare x reg to varLocation
+                // if boolean load it to x reg
+                    // compare x reg to varLocation
+                // if string literal
+                    // check stringsInHeap for it
+                        // if it is there add that address to x reg
+                            // compare x reg to varLocation
+                        // if it is not there then condition is false and we can skip the block
+
+        // if string literal
+            // check stringsInHeap for it
+                // if it is there save the address in strLocation and the string in tempString
+                    // if next operand is a string literal compare it to tempString
+                        // if true then gen code otherwise skip to end of block
+                    // if next operand is a var then add str location to x reg and compare to var location
+                // if it is not there add it to a tempString var and go to the next operand
+                    // if next operand is a string literal compare it to tempString
+                    // if next operand is a var then condition is false and we can skip the block
+        
+        boolean isEquivalence = false;
+        if (currentASTNode.toString().split(" ")[0].equals("<Is_Equal>")) {
+            isEquivalence = true;
+        }
+        nextASTNode();
 
     }
 
     private static void addBooleanValueToMemory(String bool) {
-        System.out.println("------------------------ " + bool);
         heapDepth -= bool.length();
         String[] hexArray = stringToAscii("\"" + bool + "\"");
         int heapPointer = heapDepth;
@@ -476,7 +547,6 @@ public class CodeGeneration {
                 return;
             }
             code.set(heapPointer, hexByte);
-            System.out.println(hexByte);
             heapPointer++;
         }
 
@@ -488,7 +558,6 @@ public class CodeGeneration {
         }
 
         heapDepth--;
-        System.out.println("------------------------" + intToHexString(heapDepth));
     }
 
     private static void addCodeToMemory(String hexCode) {
