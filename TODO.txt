@@ -28,7 +28,12 @@ Possible Nodes:
     Boolean_Value
     Id
 
+why does z flag not change to 0 when comparison is false
 
+lines
+    Boolean_Expression: branch or skip code gen when condition is false
+
+comparions with string literals
 
 check warnings
 
