@@ -32,7 +32,7 @@ public class CodeGeneration {
     private static int currentMemoryLocation;
     private static int heapDepth;
     private static int skipCodeGenUntil;
-    private static String[] booleansInMemory = {"00" , "00"};
+    private static String[] booleansInMemory = new String[2];
     private static boolean codeGenPaused;
 
     public static String doCodeGeneration(DefaultMutableTreeNode[] roots) {
@@ -50,7 +50,6 @@ public class CodeGeneration {
 
     private static void initializeVariables(DefaultMutableTreeNode[] roots) {
         hasError = false;
-        code = new ArrayList<>();
         initalizeCode();
         staticTable = new ArrayList<>();
         scopeBacktrackDepths = new ArrayList<>();
@@ -64,18 +63,19 @@ public class CodeGeneration {
         currentScope = symbolTable;
         scopEnumeration = symbolTable.preorderEnumeration();
         astEnumeration = ast.preorderEnumeration();
-        scopeNames = new Hashtable<>();
         initializeScopeNames();
+        stringsInHeap = new Hashtable<>();
         jumpTable = new Hashtable<>();
         currentMemoryLocation = 0x00;
         heapDepth = 0xFF;
-        stringsInHeap = new Hashtable<>();
         skipCodeGenUntil = Integer.MAX_VALUE;
+        booleansInMemory[0] = "00"; booleansInMemory[1] = "00";
         codeGenPaused = false;
     }
 
     private static void initalizeCode() {
         // initialize code array with 256 bytes of 00
+        code = new ArrayList<>();
         for (int i = 0; i < 256; i++) {
             code.add("00");
         }
@@ -83,6 +83,7 @@ public class CodeGeneration {
 
     private static void initializeScopeNames() {
         // initialize scope names
+        scopeNames = new Hashtable<>();
         Enumeration<TreeNode> enumeration = symbolTable.preorderEnumeration();
         while(enumeration.hasMoreElements()) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
@@ -193,10 +194,6 @@ public class CodeGeneration {
     }
 
     private static void Print_Statement() { 
-        // 01 in x reg = print int in y reg
-        // 02 in x reg = print string stored at address in y reg
-        // op code FF to do a system call
-
         nextASTNode();
         if (currentASTNode.toString().split(" ")[0].length() == 1) {
             // print single digit
@@ -330,14 +327,6 @@ public class CodeGeneration {
     }
 
     private static void Assignment_Statement() {
-        // for sum go to Sum_Of() then do int steps
-        // for int
-        // load acc with digit in hex: A9 ??
-        // store acc in mem temp: 8D T? XX
-        // for string
-        // write data into heap
-        // store the pointer to the heap in the temp: A9 [Start of string in heap] 8D T? XX
-
         // get the temp address for the variable
         nextASTNode();
         String tempLocation = getVarLocation(currentASTNode.toString().split(" ")[0], currentScope);
@@ -422,16 +411,6 @@ public class CodeGeneration {
     }
 
     private static void Variable_Decleration() {
-        // add to static table
-        // for int
-        // load acc with 0: A9 00
-        // sta acc in mem temp: 8D T? XX
-        // for string
-        // just add to static table
-        // for boolean
-        // load acc with 0: A9 00
-        // sta acc in mem temp: 8D T? XX
-
         // add variable to static table
         nextASTNode();
         String varType = currentASTNode.toString().split(" ")[0];
@@ -494,7 +473,7 @@ public class CodeGeneration {
             }
             else {
                 // condition true, continue with code generation, generate a message for unneccesary conditional
-                messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
+                messages.add("Info: Always true conditional found");
             }
         }
     }
@@ -577,10 +556,10 @@ public class CodeGeneration {
 
             // check stringsInHeap for the string
             String tempString = "";
-            if (stringsInHeap.containsKey(currentASTNode.toString().split(" ")[0])) {
+            if (stringsInHeap.containsKey(currentASTNode.toString().split(" ")[0].replaceAll("\"", ""))) {
 
                 // store the address of the string in strLocation and the string in tempString
-                String strLocation = stringsInHeap.get(currentASTNode.toString().split(" ")[0]);
+                String strLocation = stringsInHeap.get(currentASTNode.toString().split(" ")[0].replaceAll("\"", ""));
                 tempString = currentASTNode.toString().split(" ")[0];
 
                 nextASTNode();
@@ -589,7 +568,7 @@ public class CodeGeneration {
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
                         // comparison is true so we can ignore branching code
-                        messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
+                        newMessage();
                     }
                     else {
                         // if the comparison returns false
@@ -601,12 +580,13 @@ public class CodeGeneration {
                 }
                 // if the next operand is a variable
                 else {
+
                     // add str location to x reg
                     addCodeToMemory("A2");
                     addCodeToMemory(strLocation);
 
-                    // compare x reg to var location and BNE
-                    compareXregToLocation(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope));
+                    // does the comparison for == or !=
+                    doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
                 }
             }
             // if the string is not in the heap
@@ -618,7 +598,7 @@ public class CodeGeneration {
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
                         // comparison is true so we can ignore branching code
-                        messages.add("Info: Always true conditional found");
+                        newMessage();
                     }
                     else {
                         // if the comparison returns false
@@ -651,9 +631,10 @@ public class CodeGeneration {
                 if (currentASTNode.toString().split(" ")[0].equals("true")) {
                     secondOperand = true;
                 }
-                if (!(firstOperand ^ secondOperand) ^ isEquivalence) {
+                System.out.println(firstOperand + " " + secondOperand + " " + isEquivalence);
+                if (!(firstOperand == secondOperand) ^ isEquivalence) {
                     // comparison is true so we can ignore branching code
-                    messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
+                    newMessage();
                 }
                 else {
                     // if the comparison returns false
@@ -674,8 +655,8 @@ public class CodeGeneration {
                     addCodeToMemory("A2");
                     addCodeToMemory("00");
                 }
-                // compare x reg to var location and BNE
-                compareXregToLocation(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope));
+                // does the comparison for == or !=
+                doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
             }
         }
 
@@ -689,7 +670,7 @@ public class CodeGeneration {
                 int secondOperand = Integer.parseInt(currentASTNode.toString().split(" ")[0]);
                 if (!(firstOperand == secondOperand) ^ isEquivalence) {
                     // comparison is true so we can ignore branching code
-                    messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
+                    newMessage();
                 }
                 else {
                     // if the comparison returns false
@@ -704,8 +685,8 @@ public class CodeGeneration {
                 addCodeToMemory("A2");
                 addCodeToMemory(intToHexString(firstOperand));
 
-                // compare x reg to var location and BNE
-                compareXregToLocation(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope));
+                // does the comparison for == or !=
+                doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
             }
         }
         // if the first operand is a variable
@@ -716,55 +697,27 @@ public class CodeGeneration {
 
             // if the next operand is a var
             if (!(Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) && currentASTNode.toString().split(" ")[0].length() == 1) {
-                // ==
-                if (isEquivalence) {
-                    // load x reg with varLocation
-                    addCodeToMemory("AE");
-                    addCodeToMemory(varLocation);
-                    addCodeToMemory("00");
+                
+                // load x reg with varLocation
+                addCodeToMemory("AE");
+                addCodeToMemory(varLocation);
+                addCodeToMemory("00");
 
-                    // compare x reg to var location and BNE
-                    varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
-                    compareXregToLocation(varLocation);
-                }
-                // !=
-                else {
-                    // load x reg with varLocation
-                    addCodeToMemory("AE");
-                    addCodeToMemory(varLocation);
-                    addCodeToMemory("00");
+                varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
 
-                    varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
-
-                    // compare x reg to var location
-                    addCodeToMemory("EC");
-                    addCodeToMemory(varLocation);
-                    addCodeToMemory("00");
-
-                    // branch n bytes to the block if they are not equal
-                    jumpTable.put("J" + jumpTable.size() , 7); // branch 8 bytes to start of block
-                    addCodeToMemory("D0");
-                    addCodeToMemory("J" + (jumpTable.size()-1));
-
-                    // if they are equal unconditional branch over the block
-
-                    // load x reg with 1
-                    addCodeToMemory("A2");
-                    addCodeToMemory("01");
-
-                    // compare x reg to var location and BNE
-                    compareXregToLocation("FF");
-                }
+                // does the comparison for == or !=
+                doComparison(varLocation , isEquivalence);
             }
             else {
                 switch(varType) {
                     case "int":
                         // load digit into x reg
                         addCodeToMemory("A2");
-                        addCodeToMemory(intToHexString(Integer.parseInt(currentASTNode.toString().split(" ")[0])));
+                        addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
     
-                        // compare x reg to var location and BNE
-                        compareXregToLocation(varLocation);
+                        // does the comparison for == or !=
+                        doComparison(varLocation , isEquivalence);
+
                         break;
                     case "boolean":
                         if (currentASTNode.toString().split(" ")[0].equals("true")) {
@@ -777,19 +730,22 @@ public class CodeGeneration {
                             addCodeToMemory("A2");
                             addCodeToMemory("00");
                         }
-                        // compare x reg to var location and BNE
-                        compareXregToLocation(varLocation);
+
+                        // does the comparison for == or !=
+                        doComparison(varLocation , isEquivalence);
+
                         break;
                     case "string":
                         // check if the string is in the heap
-                        if (stringsInHeap.containsKey(currentASTNode.toString().split(" ")[0])) {
-                            String heapLocation = stringsInHeap.get(currentASTNode.toString().split(" ")[0]);
+                        if (stringsInHeap.containsKey(currentASTNode.toString().split(" ")[0].replaceAll("\"" , ""))) {
+                            String heapLocation = stringsInHeap.get(currentASTNode.toString().split(" ")[0].replaceAll("\"" , ""));
+
                             // load x reg with the heap location
                             addCodeToMemory("A2");
                             addCodeToMemory(heapLocation);
 
-                            // compare x reg to var location and BNE
-                            compareXregToLocation(varLocation);
+                            // does the comparison for == or !=
+                            doComparison(varLocation , isEquivalence);
                         }
                         else {
                             // cant be equal if the string is not in the heap
@@ -800,6 +756,18 @@ public class CodeGeneration {
                         break; 
                 }
             }
+        }
+    }
+
+    private static void doComparison(String location , boolean isEquivalence) {
+        System.out.println(currentScope);
+        if (isEquivalence) {
+            // compare x reg to var location and BNE
+            compareXregToLocation(location);
+        }
+        else {
+            // compare x reg to var location branch to block on not equal, branch over if equal
+            notEqualToCompare(location);
         }
     }
 
@@ -814,6 +782,27 @@ public class CodeGeneration {
         addCodeToMemory("D0");
         jumps.add(currentMemoryLocation);
         addCodeToMemory("J" + (jumpTable.size()-1));
+    }
+
+    private static void notEqualToCompare(String location) {
+        // compare x reg to var location
+        addCodeToMemory("EC");
+        addCodeToMemory(location);
+        addCodeToMemory("00");
+
+        // branch n bytes to the block if they are not equal
+        jumpTable.put("J" + jumpTable.size() , 7); // branch 7 bytes to start of block
+        addCodeToMemory("D0");
+        addCodeToMemory("J" + (jumpTable.size()-1));
+
+        // if they are equal unconditional branch over the block
+
+        // load x reg with 1
+        addCodeToMemory("A2");
+        addCodeToMemory("01");
+
+        // compare x reg to var location and BNE
+        compareXregToLocation("FF");
     }
 
     private static void addBooleanValueToMemory(String bool) {
@@ -848,7 +837,7 @@ public class CodeGeneration {
         if (skipBlock()) { return; }
 
         code.set(currentMemoryLocation, hexCode);
-        if (verbose) { System.out.println("Added " + hexCode + " to memory location " + currentMemoryLocation); }
+        if (verbose) { System.out.println("Added " + hexCode + " to memory location $" + intToHexString(currentMemoryLocation)); }
         currentMemoryLocation++;
     }
 
@@ -868,6 +857,8 @@ public class CodeGeneration {
         heapDepth -= str.replaceAll("\"", "").length();
         String[] hexArray = stringToAscii(str);
         int heapPointer = heapDepth;
+
+        stringsInHeap.put(str.replaceAll("\"", "") , intToHexString(heapPointer));
 
         for (String hexByte : hexArray) {
             if(!code.get(heapPointer).equals("00")) {
@@ -922,7 +913,6 @@ public class CodeGeneration {
 
     private static String getVarLocation(String var , DefaultMutableTreeNode scope) {
         String tempLocation = "Location not found";
-
         Hashtable<String , VariableInfo> hashTable = (Hashtable<String , VariableInfo>) scope.getUserObject();
         while (!hashTable.containsKey(var)) {
             scope = (DefaultMutableTreeNode) scope.getParent();
@@ -967,17 +957,29 @@ public class CodeGeneration {
         // copy code to clipboard
         if (verbose) { copyStringToClipboard(codeString); }
 
-        codeString = messagesString() + "Memory:\n" + codeString;
+        codeString = messagesString() + "Code:\n" + codeString;
         if (verbose) { System.out.println("\n" + testString); }
         return codeString;
     }
 
     private static String messagesString() {
-        String messagesString = "\nMessages:\n";
-        for (String message : messages) {
-            messagesString += "--" + message + "\n";
+        String messagesString = "\n";
+        if (messages.size() > 0) {
+            messagesString = "\nMessages:\n";
+            for (String message : messages) {
+                messagesString += "--" + message + "\n";
+            }
         }
         return messagesString;
+    }
+
+    private static void newMessage() {
+        if (whileLoopStart.size() > 0) {
+            messages.add("Warning: Infinite loop detected.");
+        }
+        else {
+            messages.add("Info: Always true conditional found");
+        }
     }
 
     private static void copyStringToClipboard(String str) {

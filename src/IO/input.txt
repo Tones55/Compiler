@@ -1,7 +1,9 @@
 {
+    
+    
     print (1)
 
-    if ("a" == "b") {
+    while ("a" == "a") {
         print (" in condition ")
     }
 
