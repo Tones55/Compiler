@@ -1,9 +1,13 @@
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
-
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+
+// used to copy code to clipboard
+import java.awt.datatransfer.StringSelection;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 
 public class CodeGeneration {
 
@@ -614,7 +618,7 @@ public class CodeGeneration {
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
                         // comparison is true so we can ignore branching code
-                        messages.add("Info: Conditional is always true at line " + currentASTNode.toString().split(" ")[1] + ".");
+                        messages.add("Info: Always true conditional found");
                     }
                     else {
                         // if the comparison returns false
@@ -882,7 +886,7 @@ public class CodeGeneration {
             return true;
         }
 
-        if (verbose && codeGenPaused) { System.out.println("Resuming Code Generation\n"); }
+        if (verbose && codeGenPaused) { System.out.println("\nResuming Code Generation"); }
         skipCodeGenUntil = Integer.MAX_VALUE;
         codeGenPaused = false;
         return false;
@@ -890,8 +894,8 @@ public class CodeGeneration {
 
     private static void skipBlock(boolean startSkip) {
         skipCodeGenUntil = scopeBacktrackDepths.size() + 1;
-        if (verbose) { System.out.println("Skipping code gen until exiting this block"); }
-        messages.add("Info: Conditional is always false at line " + currentASTNode.toString().split(" ")[1] + ".");
+        if (verbose) { System.out.println("Skipping code gen until exiting this block\n"); }
+        messages.add("Info: Always false conditional found");
     }
 
     private static String[] stringToAscii(String str) {
@@ -959,8 +963,27 @@ public class CodeGeneration {
             testString += "[" + intToHexString(i) + "]: " + hexByte + " ";
             i++;
         }
+
+        // copy code to clipboard
+        if (verbose) { copyStringToClipboard(codeString); }
+
+        codeString = messagesString() + "Memory:\n" + codeString;
         if (verbose) { System.out.println("\n" + testString); }
         return codeString;
+    }
+
+    private static String messagesString() {
+        String messagesString = "\nMessages:\n";
+        for (String message : messages) {
+            messagesString += "--" + message + "\n";
+        }
+        return messagesString;
+    }
+
+    private static void copyStringToClipboard(String str) {
+        StringSelection stringSelection = new StringSelection(str);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
     }
 
     private static void giveVariablesAddresses() {

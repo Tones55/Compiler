@@ -2,10 +2,6 @@ javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
 
-boolean are 1=true 0=false
-strings are refrences, store at end of heap
-
-track symbol table number with A HASH TABLE
 
 when doing == comparison
     BNE means we can branch past block when condition fails
@@ -32,3 +28,8 @@ test every possible path through the code
 check warnings
 
 check printing boolean in a variable
+
+
+
+fix later:
+    "" breaks in Semantic Analysis

@@ -1,10 +1,9 @@
 {
-    int a
-    a = 1
-    int b
-    b = 9
-    while (a != b) {
-        a = 1 + a
+    print (1)
+
+    if ("a" == "b") {
+        print (" in condition ")
     }
-    print (a)
+
+    print (2)
 }$
