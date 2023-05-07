@@ -2,26 +2,17 @@ javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
 
-
-when doing == comparison
-    BNE means we can branch past block when condition fails
-when doing != comparison 
-    BNE means condition fails when result is true
-    so branch to the block
-    in between block and condition put an unconditional branch past the block
-
-lines:
-    If_Statement: branch or skip code gen when condition is false
-    Boolean_Expression: branch or skip code gen when condition is false
-
-comparions with string literals
+Checked:
+    Print_Statement
+    Assignment_Statement
+    Variable_Decleration
+    While_Statement
+    If_Statement
+    Sum_Of
+    Boolean_Expression
+    
 
 test every possible path through the code
-
-check warnings
-
-check printing boolean in a variable
-
 
 
 fix later:

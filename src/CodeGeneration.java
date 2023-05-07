@@ -96,7 +96,7 @@ public class CodeGeneration {
             // check for out of memory error
             if (currentMemoryLocation > heapDepth || code.size() > 256) {
                 hasError = true;
-                System.out.println("Code Generation Error: Out of Memory");
+                System.out.println("Code Generation Error: Exceeded 256 byte memory limit");
             } 
             if (hasError) { return; }
 
@@ -145,8 +145,8 @@ public class CodeGeneration {
         addCodeToMemory("00");
     }
 
-    private static void addToStaticDataTable(String var , boolean pointer) {
-        staticTable.add(new StaticTableData("T" + staticTable.size() , var , scopeNames.get(currentScope) , staticTable.size() , pointer));
+    private static void addToStaticDataTable(String var) {
+        staticTable.add(new StaticTableData("T" + staticTable.size() , var , scopeNames.get(currentScope) , staticTable.size()));
     }
 
     private static void enterBlock() {
@@ -276,22 +276,30 @@ public class CodeGeneration {
         }
         // print a sum
         else if(currentASTNode.toString().charAt(0) == '<') {
-            // load x reg with 01
-            addCodeToMemory("A2");
-            addCodeToMemory("01");
 
-            // add sum code
-            String sumLocation = Sum_Of(true);
+            if (currentASTNode.toString().equals("<Sum_Of>")) {
 
-            // store sum in memory
-            addCodeToMemory("8D");
-            addCodeToMemory(sumLocation);
-            addCodeToMemory("00");
+                // load x reg with 01
+                addCodeToMemory("A2");
+                addCodeToMemory("01");
 
-            // load y reg with sum
-            addCodeToMemory("AC");
-            addCodeToMemory(sumLocation);
-            addCodeToMemory("00");
+                // add sum code
+                Sum_Of(true);
+
+                // store sum in memory
+                addCodeToMemory("8D");
+                addCodeToMemory("00");
+                addCodeToMemory("00");
+
+                // load y reg with sum
+                addCodeToMemory("AC");
+                addCodeToMemory("00");
+                addCodeToMemory("00");
+            }
+            // print boolean expression
+            else {
+                Boolean_Expression(true);
+            }
         }
         // print a boolean
         else {
@@ -416,12 +424,7 @@ public class CodeGeneration {
         String varType = currentASTNode.toString().split(" ")[0];
         nextASTNode();
 
-        if(varType.equals("string")) {
-            addToStaticDataTable(currentASTNode.toString().split(" ")[0] , true);
-        }
-        else {
-            addToStaticDataTable(currentASTNode.toString().split(" ")[0] , false);
-        }
+        addToStaticDataTable(currentASTNode.toString().split(" ")[0]);
 
         // check type, if string do nothing, otherwise initialize to 0/false
         if(varType.equals("string")) {
@@ -443,7 +446,7 @@ public class CodeGeneration {
         whileLoopStart.add(currentMemoryLocation);
         nextASTNode();
         if (currentASTNode.toString().charAt(0) == '<') {
-            Boolean_Expression();
+            Boolean_Expression(false);
         }
         else {
             if (currentASTNode.toString().split(" ")[0].equals("false")) {
@@ -462,7 +465,7 @@ public class CodeGeneration {
     private static void If_Statement() {
         nextASTNode();
         if (currentASTNode.toString().charAt(0) == '<') {
-            Boolean_Expression();
+            Boolean_Expression(false);
         }
         else {
             if (currentASTNode.toString().split(" ")[0].equals("false")) {
@@ -478,7 +481,7 @@ public class CodeGeneration {
         }
     }
 
-    private static String Sum_Of(boolean first) {
+    private static void Sum_Of(boolean first) {
         // will leave result in accumulator
 
         // if it is the first operand
@@ -540,10 +543,9 @@ public class CodeGeneration {
             // do recursion
             Sum_Of(false);
         }
-        return "00";
     }
 
-    private static void Boolean_Expression() {
+    private static void Boolean_Expression(boolean inPrint) {
         // store comparison type in isEquivalence
         boolean isEquivalence = false;
         if (currentASTNode.toString().split(" ")[0].equals("<Is_Equal>")) {
@@ -566,11 +568,23 @@ public class CodeGeneration {
                 // check the next operand
                 // if the next operand is a string literal
                 if (currentASTNode.toString().charAt(0) == '"') {
-                    if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
+                    if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) { 
+                        if (inPrint) {
+                            // load y reg with 1
+                            addCodeToMemory("A0");
+                            addCodeToMemory("01");
+                            return;
+                        }
                         // comparison is true so we can ignore branching code
                         newMessage();
                     }
                     else {
+                        if (inPrint) {
+                            // load y reg with 0
+                            addCodeToMemory("A0");
+                            addCodeToMemory("00");
+                            return;
+                        }
                         // if the comparison returns false
                         // branch to the end of the block
                         // or we could skip code gen until the end of the block
@@ -585,6 +599,11 @@ public class CodeGeneration {
                     addCodeToMemory("A2");
                     addCodeToMemory(strLocation);
 
+                    if (inPrint) {
+                        printComaprison(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope) , isEquivalence);
+                        return;
+                    }
+
                     // does the comparison for == or !=
                     doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
                 }
@@ -597,10 +616,22 @@ public class CodeGeneration {
                 // if the next operand is a string literal
                 if (currentASTNode.toString().charAt(0) == '"') {
                     if (!(tempString.equals(currentASTNode.toString().split(" ")[0]) ^ isEquivalence)) {
+                        if (inPrint) {
+                            // load y reg with 1
+                            addCodeToMemory("A0");
+                            addCodeToMemory("01");
+                            return;
+                        }
                         // comparison is true so we can ignore branching code
                         newMessage();
                     }
                     else {
+                        if (inPrint) {
+                            // load y reg with 0
+                            addCodeToMemory("A0");
+                            addCodeToMemory("00");
+                            return;
+                        }
                         // if the comparison returns false
                         // branch to the end of the block
                         // or we could skip code gen until the end of the block
@@ -609,6 +640,12 @@ public class CodeGeneration {
                 }
                 // if the next operand is a variable
                 else {
+                    if (inPrint) {
+                        // load y reg with 0
+                        addCodeToMemory("A0");
+                        addCodeToMemory("00");
+                        return;
+                    }
                     // comparison must be false if the string is not in the heap
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block 
@@ -617,7 +654,7 @@ public class CodeGeneration {
             }
         }
         // if the first operand is a boolval
-        else if (currentASTNode.toString().split(" ")[0].length() > 1) {
+        else if (currentASTNode.toString().split(" ")[0].length() > 1 && currentASTNode.toString().split(" ")[0].length() < 8) {
             boolean firstOperand = false;
             if (currentASTNode.toString().split(" ")[0].equals("true")) {
                 firstOperand = true;
@@ -631,12 +668,23 @@ public class CodeGeneration {
                 if (currentASTNode.toString().split(" ")[0].equals("true")) {
                     secondOperand = true;
                 }
-                System.out.println(firstOperand + " " + secondOperand + " " + isEquivalence);
                 if (!(firstOperand == secondOperand) ^ isEquivalence) {
+                    if (inPrint) {
+                        // load y reg with 1
+                        addCodeToMemory("A0");
+                        addCodeToMemory("01");
+                        return;
+                    }
                     // comparison is true so we can ignore branching code
                     newMessage();
                 }
                 else {
+                    if (inPrint) {
+                        // load y reg with 0
+                        addCodeToMemory("A0");
+                        addCodeToMemory("00");
+                        return;
+                    }
                     // if the comparison returns false
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block
@@ -655,6 +703,10 @@ public class CodeGeneration {
                     addCodeToMemory("A2");
                     addCodeToMemory("00");
                 }
+                if (inPrint) {
+                    printComaprison(getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope) , isEquivalence);
+                    return;
+                }
                 // does the comparison for == or !=
                 doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
             }
@@ -669,10 +721,22 @@ public class CodeGeneration {
             if (Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) {
                 int secondOperand = Integer.parseInt(currentASTNode.toString().split(" ")[0]);
                 if (!(firstOperand == secondOperand) ^ isEquivalence) {
+                    if (inPrint) {
+                        // load y reg with 1
+                        addCodeToMemory("A0");
+                        addCodeToMemory("01");
+                        return;
+                    }
                     // comparison is true so we can ignore branching code
                     newMessage();
                 }
                 else {
+                    if (inPrint) {
+                        // load y reg with 0
+                        addCodeToMemory("A0");
+                        addCodeToMemory("00");
+                        return;
+                    }
                     // if the comparison returns false
                     // branch to the end of the block
                     // or we could skip code gen until the end of the block
@@ -680,17 +744,55 @@ public class CodeGeneration {
                 }
             }
             // if the next operand is a variable
-            else {
+            else if (currentASTNode.toString().split(" ")[0].length() == 1) {
                 // load x reg with first operand
                 addCodeToMemory("A2");
                 addCodeToMemory(intToHexString(firstOperand));
 
+                if (inPrint) {
+                    // load y reg with 0
+                    addCodeToMemory("A0");
+                    addCodeToMemory("00");
+                    return;
+                }
                 // does the comparison for == or !=
                 doComparison(currentASTNode.toString().split(" ")[0] , isEquivalence);
             }
+            // if the next operand is a sum
+            else {
+                int secondOperand = 0;
+                while (!currentASTNode.toString().equals("<Block>")) {
+                    nextASTNode();
+                    if (Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) {
+                        secondOperand += Integer.parseInt(currentASTNode.toString().split(" ")[0]);
+                    }
+                }
+                if (firstOperand == secondOperand) {
+                    if (inPrint) {
+                        // load y reg with 1
+                        addCodeToMemory("A0");
+                        addCodeToMemory("01");
+                        return;
+                    }
+                    // comparison is true so we can ignore branching code
+                    newMessage();
+                }
+                else {
+                    if (inPrint) {
+                        // load y reg with 0
+                        addCodeToMemory("A0");
+                        addCodeToMemory("00");
+                        return;
+                    }
+                    // if the comparison returns false
+                    // branch to the end of the block
+                    // or we could skip code gen until the end of the block
+                    skipBlock(true);
+                }
+            }
         }
         // if the first operand is a variable
-        else {
+        else if (currentASTNode.toString().split(" ")[0].length() == 1) {
             String varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
             String varType = getVarType(currentScope , currentASTNode.toString().split(" ")[0]);
             nextASTNode();
@@ -705,18 +807,52 @@ public class CodeGeneration {
 
                 varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
 
+                if (inPrint) {
+                    printComaprison(varLocation , isEquivalence);
+                    return;
+                }
+
                 // does the comparison for == or !=
                 doComparison(varLocation , isEquivalence);
             }
             else {
                 switch(varType) {
                     case "int":
-                        // load digit into x reg
-                        addCodeToMemory("A2");
-                        addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
-    
-                        // does the comparison for == or !=
-                        doComparison(varLocation , isEquivalence);
+                        if (Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) {
+                            // load digit into x reg
+                            addCodeToMemory("A2");
+                            addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
+
+                            if (inPrint) {
+                                printComaprison(varLocation , isEquivalence);
+                                return;
+                            }
+        
+                            // does the comparison for == or !=
+                            doComparison(varLocation , isEquivalence);
+                        }
+                        else {
+                            // load sum result into acc
+                            Sum_Of(true);
+
+                            // store acc at 00
+                            addCodeToMemory("8D");
+                            addCodeToMemory("00");
+                            addCodeToMemory("00");
+
+                            // load x reg with varLocation
+                            addCodeToMemory("AE");
+                            addCodeToMemory(varLocation);
+                            addCodeToMemory("00");
+
+                            if (inPrint) {
+                                printComaprison("00" , isEquivalence);
+                                return;
+                            }
+
+                            // does the comparison for == or !=
+                            doComparison("00" , isEquivalence);
+                        }
 
                         break;
                     case "boolean":
@@ -729,6 +865,11 @@ public class CodeGeneration {
                             // load x reg with 0
                             addCodeToMemory("A2");
                             addCodeToMemory("00");
+                        }
+
+                        if (inPrint) {
+                            printComaprison(varLocation , isEquivalence);
+                            return;
                         }
 
                         // does the comparison for == or !=
@@ -744,10 +885,21 @@ public class CodeGeneration {
                             addCodeToMemory("A2");
                             addCodeToMemory(heapLocation);
 
+                            if (inPrint) {
+                                printComaprison(varLocation , isEquivalence);
+                                return;
+                            }
+
                             // does the comparison for == or !=
                             doComparison(varLocation , isEquivalence);
                         }
                         else {
+                            if (inPrint) {
+                                // load y reg with 0
+                                addCodeToMemory("A0");
+                                addCodeToMemory("00");
+                                return;
+                            }
                             // cant be equal if the string is not in the heap
                             // branch to the end of the block
                             // or we could skip code gen until the end of the block
@@ -757,13 +909,139 @@ public class CodeGeneration {
                 }
             }
         }
+        // if the first operand is a sum
+        else {
+            // load acc with sum
+            Sum_Of(true);
+
+            // store acc at 00
+            addCodeToMemory("8D");
+            addCodeToMemory("00");
+            addCodeToMemory("00");
+
+            nextASTNode();
+
+            // if the next operand is a digit
+            if (Character.isDigit(currentASTNode.toString().split(" ")[0].charAt(0))) {
+                // load x reg with digit
+                addCodeToMemory("A2");
+                addCodeToMemory("0" + currentASTNode.toString().split(" ")[0]);
+
+                if (inPrint) {
+                    printComaprison("00" , isEquivalence);
+                    return;
+                }
+
+                // does the comparison for == or !=
+                doComparison("00" , isEquivalence);
+            }
+            // if the next operand is a var
+            else if (currentASTNode.toString().split(" ")[0].length() == 1) {
+                String varLocation = getVarLocation(currentASTNode.toString().split(" ")[0] , currentScope);
+
+                // load x reg with varLocation
+                addCodeToMemory("AE");
+                addCodeToMemory(varLocation);
+                addCodeToMemory("00");
+
+                if (inPrint) {
+                    printComaprison(varLocation , isEquivalence);
+                    return;
+                }
+
+                // does the comparison for == or !=
+                doComparison(varLocation , isEquivalence);
+            }
+            // if the next operand is a sum
+            else {
+                //store 00 00 in x reg
+                addCodeToMemory("AE");
+                addCodeToMemory("00");
+                addCodeToMemory("00");
+
+                // load acc with sum
+                Sum_Of(true);
+
+                // store acc at 00
+                addCodeToMemory("8D");
+                addCodeToMemory("00");
+                addCodeToMemory("00");
+
+                if (inPrint) {
+                    printComaprison("00" , isEquivalence);
+                    return;
+                }
+
+                // does comparison for == or !=
+                doComparison("00" , isEquivalence);
+            }
+        }
+    }
+
+    private static void printComaprison(String location , boolean isEquivalence) {
+        int first = -1;
+        int second = -1;
+
+        if (isEquivalence) {
+            first = 1;
+            second = 0;
+        }
+        else {
+            first = 0;
+            second = 1;
+        }
+
+        // compare x reg to var location
+        addCodeToMemory("EC");
+        addCodeToMemory(location);
+        addCodeToMemory("00");
+
+        // load x reg with 1
+        addCodeToMemory("A2");
+        addCodeToMemory("01");
+
+        // if they are not equal branch over the print 0
+        jumpTable.put("J" + jumpTable.size() , 9); // branch 9 bytes to start of print 0
+        addCodeToMemory("D0");
+        addCodeToMemory("J" + (jumpTable.size()-1));
+
+        // print first
+        // load y reg with first
+        addCodeToMemory("A0");
+        addCodeToMemory("0" + first);
+
+        // unconditional branch over print 0
+        // load x reg with 1
+        addCodeToMemory("A2");
+        addCodeToMemory("01");
+
+        // compare x reg to $FF
+        addCodeToMemory("EC");
+        addCodeToMemory("FF");
+        addCodeToMemory("00");
+
+        jumpTable.put("J" + jumpTable.size() , 2); // branch 2 bytes over print 0
+        addCodeToMemory("D0");
+        addCodeToMemory("J" + (jumpTable.size()-1));
+
+        // print second
+        // load y reg with second
+        addCodeToMemory("A0");
+        addCodeToMemory("0" + second);
+
+        // system call in Print_Statement()
     }
 
     private static void doComparison(String location , boolean isEquivalence) {
-        System.out.println(currentScope);
+
+        // compare x reg to var location
+        addCodeToMemory("EC");
+        addCodeToMemory(location);
+        addCodeToMemory("00");
+
         if (isEquivalence) {
             // compare x reg to var location and BNE
-            compareXregToLocation(location);
+            equalToCompare(location);
         }
         else {
             // compare x reg to var location branch to block on not equal, branch over if equal
@@ -771,12 +1049,7 @@ public class CodeGeneration {
         }
     }
 
-    private static void compareXregToLocation(String location) {
-        // compare x reg to var location
-        addCodeToMemory("EC");
-        addCodeToMemory(location);
-        addCodeToMemory("00");
-
+    private static void equalToCompare(String location) {
         // branch n bytes to the end of the block if they are not equal
         jumpTable.put("J" + jumpTable.size() , -1);
         addCodeToMemory("D0");
@@ -785,24 +1058,23 @@ public class CodeGeneration {
     }
 
     private static void notEqualToCompare(String location) {
-        // compare x reg to var location
-        addCodeToMemory("EC");
-        addCodeToMemory(location);
-        addCodeToMemory("00");
-
         // branch n bytes to the block if they are not equal
         jumpTable.put("J" + jumpTable.size() , 7); // branch 7 bytes to start of block
         addCodeToMemory("D0");
         addCodeToMemory("J" + (jumpTable.size()-1));
 
         // if they are equal unconditional branch over the block
-
         // load x reg with 1
         addCodeToMemory("A2");
         addCodeToMemory("01");
 
+        // compare x reg to FF
+        addCodeToMemory("EC");
+        addCodeToMemory("FF");
+        addCodeToMemory("00");
+
         // compare x reg to var location and BNE
-        compareXregToLocation("FF");
+        equalToCompare("FF");
     }
 
     private static void addBooleanValueToMemory(String bool) {
@@ -844,7 +1116,7 @@ public class CodeGeneration {
     private static void nextASTNode() {
         if (astEnumeration.hasMoreElements()) {
             currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
-            System.out.println("Current AST Node: " + currentASTNode.toString());
+            if (verbose) { System.out.println("Current AST Node: " + currentASTNode.toString()); }
         }
     }
 
@@ -852,13 +1124,12 @@ public class CodeGeneration {
 
         if (skipBlock()) { return; }
 
-        if (verbose) { System.out.println("Adding string to heap: " + str);}
-
         heapDepth -= str.replaceAll("\"", "").length();
         String[] hexArray = stringToAscii(str);
         int heapPointer = heapDepth;
 
         stringsInHeap.put(str.replaceAll("\"", "") , intToHexString(heapPointer));
+        if (verbose) { System.out.println("Added string to heap: " + str + "to memory location $ " + intToHexString(heapPointer));}
 
         for (String hexByte : hexArray) {
             if(!code.get(heapPointer).equals("00")) {

@@ -1,11 +1,12 @@
 {
-    
-    
+    boolean a
+    a = true
+
     print (1)
 
-    while ("a" == "a") {
-        print (" in condition ")
-    }
+    print (a)
+    a = false
+    print (a)
 
-    print (2)
+    print (3)
 }$
