@@ -1,12 +1,4 @@
 {
-    boolean a
-    a = true
-
-    print (1)
-
-    print (a)
-    a = false
-    print (a)
-
-    print (3)
+    string a
+    a = ""
 }$

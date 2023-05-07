@@ -2,6 +2,8 @@ javac -d ./classes ./src/*.java
 java -cp ./classes Compiler ./src/IO/input.txt
 
 
+test every possible path through the code
+
 Checked:
     Print_Statement
     Assignment_Statement
@@ -10,10 +12,6 @@ Checked:
     If_Statement
     Sum_Of
     Boolean_Expression
-    
 
-test every possible path through the code
-
-
-fix later:
-    "" breaks in Semantic Analysis
+known issues:
+    empty string breaks in SemanticAnalysis
