@@ -303,31 +303,20 @@ public class CodeGeneration {
         }
         // print a boolean
         else {
+            // load x reg with 01
+            addCodeToMemory("A2");
+            addCodeToMemory("01");
             // print true
             if(currentASTNode.toString().split(" ")[0].equals("true")) {
-                if(booleansInMemory[0].equals("00")) {
-                    addBooleanValueToMemory("true");
-                }
-                // load x reg with 02
-                addCodeToMemory("A2");
-                addCodeToMemory("02");
-
-                // load y reg with pointer to string
+                // load y reg with 01
                 addCodeToMemory("A0");
-                addCodeToMemory(booleansInMemory[0]);
+                addCodeToMemory("01");
             }
             // print false
             else {
-                if(booleansInMemory[1].equals("00")) {
-                    addBooleanValueToMemory("false");
-                }
-                // load x reg with 02
-                addCodeToMemory("A2");
-                addCodeToMemory("02");
-
-                // load y reg with pointer to string
+                // load y reg with 00
                 addCodeToMemory("A0");
-                addCodeToMemory(booleansInMemory[0]);
+                addCodeToMemory("00");
             }
         }
         // system call
