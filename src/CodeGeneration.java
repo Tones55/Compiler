@@ -39,6 +39,7 @@ public class CodeGeneration {
         if (roots == null) {
             return "Skipped Code Generation due to compilation error";
         }
+        System.out.println("Code Generation: Generating Code...");
 
         initializeVariables(roots);
         generateCode();
@@ -1098,14 +1099,13 @@ public class CodeGeneration {
         if (skipBlock()) { return; }
 
         code.set(currentMemoryLocation, hexCode);
-        if (verbose) { System.out.println("Added " + hexCode + " to memory location $" + intToHexString(currentMemoryLocation)); }
+        if (verbose) { System.out.println("Code Generation: Added " + hexCode + " to memory location $" + intToHexString(currentMemoryLocation)); }
         currentMemoryLocation++;
     }
 
     private static void nextASTNode() {
         if (astEnumeration.hasMoreElements()) {
             currentASTNode = (DefaultMutableTreeNode) astEnumeration.nextElement();
-            if (verbose) { System.out.println("Current AST Node: " + currentASTNode.toString()); }
         }
     }
 
@@ -1118,7 +1118,7 @@ public class CodeGeneration {
         int heapPointer = heapDepth;
 
         stringsInHeap.put(str.replaceAll("\"", "") , intToHexString(heapPointer));
-        if (verbose) { System.out.println("Added string to heap: " + str + "to memory location $ " + intToHexString(heapPointer));}
+        if (verbose) { System.out.println("Code Generation: Added string to heap: " + str + "to memory location $ " + intToHexString(heapPointer));}
 
         for (String hexByte : hexArray) {
             if(!code.get(heapPointer).equals("00")) {

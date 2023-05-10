@@ -10,7 +10,7 @@ public class Compiler {
 
         System.out.println(); // for readability in output console
 
-        boolean verbose = false; 
+        boolean verbose = true; 
         String output;
         ArrayList<ArrayList<String>> programs = new ArrayList<ArrayList<String>>(); 
         programs.add(new ArrayList<String>()); 
@@ -71,12 +71,13 @@ public class Compiler {
             fileLine++;
             output = CodeGeneration.doCodeGeneration(SemanticAnalysis.doSemanticAnalysis(Parser.doParse(Lexer.doLex(programs.get(i)))));
             System.out.println();
-            System.out.println("Program " + i + ": " + output);
+            System.out.println("Program " + (i+1) + ": " + output);
+            System.out.println();
 
             // write output to output.txt
             try {
                 java.io.PrintWriter writer = new java.io.PrintWriter("./src/IO/output.txt");
-                writer.println("Program " + i + ": ");
+                writer.println("Program " + (i+1) + ": ");
                 writer.println(output);
                 writer.println("\n");
                 writer.close();

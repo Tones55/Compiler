@@ -1,4 +1,9 @@
 {
-    string a
-    a = ""
+    print (true)
+    print (false)
 }$
+{
+    int x
+    x = 1
+    print(x)
+}

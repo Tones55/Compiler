@@ -11,3 +11,4 @@ Token.class
 Node.class
 TreeGraphics.class
 classes/VariableInfo.class
+classes/StaticTableData.class
